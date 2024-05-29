@@ -1,0 +1,24 @@
+:root {
+    --default-border-color: #e1e4e8;
+}
+
+body {
+    font-size: 100%;
+    font-family: sans-serif;
+}
+
+.node {
+    border: 1px solid var(--default-border-color);
+
+    .node-header {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--default-border-color);
+    }
+
+    .node-content {
+        padding: 1rem;
+    }
+}
