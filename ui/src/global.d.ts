@@ -11,16 +11,25 @@ export interface SocketIONodeData {
     path: string
 }
 
-export interface HTTPRequestNode extends Node {
+export interface RootNode {
+    id: string
+    type: 'Root'
+    data: any
+    position: { x: number, y: number }
+}
+
+export interface HTTPRequestNode {
     id: string
     type: 'HTTPRequest'
     data: HTTPRequestNodeData
+    position: { x: number, y: number }
 }
 
-export interface SocketIONode extends Node {
+export interface SocketIONode {
     id: string
     type: 'SocketIO'
     data: SocketIONodeData
+    position: { x: number, y: number }
 }
 
-export type Node = HTTPRequestNode | SocketIONode
+export type Node = RootNode | HTTPRequestNode | SocketIONode

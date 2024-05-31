@@ -1,16 +1,12 @@
 <template>
-    <div>
-        <template v-for="node in nodes">
-            <NodeContainer :node="node"></NodeContainer>
-        </template>
+    <div id="frame">
+        <NodeEditor style="width: 100%; height: 100%;"></NodeEditor>
     </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import NodeContainer from './NodeContainer.vue'
-import { Node } from '@/global'
-import { nanoid } from 'nanoid'
+import NodeEditor from './NodeEditor.vue'
 
 const environments = reactive([
     {
@@ -31,43 +27,5 @@ const environments = reactive([
 
 const selectedEnvironmentIndex = ref(0)
 
-const nodes = reactive<Node[]>([
-    {
-        id: nanoid(),
-        type: 'HTTPRequest',
-        data: {
-            method: 'POST',
-            url: '{{ apiUrl }}/user/login',
-            headers: [
-                { key: 'Content-Type', value: 'application/json' }
-            ],
-            body: '{"key": "value"}',
-            output: "$response.body.access_token"
-        },
-    },
-    {
-        id: nanoid(),
-        type: 'SocketIO',
-        data: {
-            url: '{{ socketUrl }}',
-            path: '/socket.io',
-        }
-    },
-])
-
 const selectedEnvironment = computed(() => environments[selectedEnvironmentIndex.value])
-
-function addNode() {
-    nodes.push({
-        id: nanoid(),
-        type: 'HTTPRequest',
-        data: {
-            method: 'GET',
-            url: '/',
-            headers: [],
-            body: '',
-            output: '',
-        },
-    })
-}
 </script>
