@@ -23,7 +23,7 @@ import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { RootNode, HTTPRequestNode, Node, SocketIONode } from '@/global'
 import Root from './Nodes/Root.vue'
-import HTTPRequest from './Nodes/HTTPRequest.vue'
+import HTTPRequest from './Nodes/HTTPRequest/Index.vue'
 import SocketIO from './Nodes/SocketIO.vue'
 import { nanoid } from 'nanoid'
 
@@ -44,10 +44,15 @@ const nodes = reactive<Node[]>([
         data: {
             method: 'POST',
             url: '{{ apiUrl }}/user/login',
+            queryParams: [],
             headers: [
-                { key: 'Content-Type', value: 'application/json' }
+                { name: 'Content-Type', value: 'application/json', disabled: false }
             ],
-            body: '{"key": "value"}',
+            body: {
+                mimeType: 'application/json',
+                params: [],
+                text: '{"key": "value"}'
+            },
             output: "$response.body.access_token"
         },
         position: { x: 350, y: 114 },

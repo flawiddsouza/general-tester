@@ -6,7 +6,9 @@
 }
 
 :root {
-    --default-border-color: #bcbcbc;
+    --border-color: #bcbcbc;
+    --border-radius: 4px;
+    --background-color: white;
 }
 
 html, body, #app, #frame {
@@ -20,10 +22,10 @@ body {
 }
 
 .node {
-    background-color: white;
-    border: 1px solid var(--default-border-color);
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
     box-shadow: 0px 0px 20px -8px #c1c1c1;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     min-width: 200px;
     max-width: 500px;
 
@@ -32,10 +34,60 @@ body {
         justify-content: space-between;
         font-weight: bold;
         padding: 0.5rem 1rem;
-        border-bottom: 1px solid var(--default-border-color);
+        border-bottom: 1px solid var(--border-color);
     }
 
     .node-content {
         padding: 1rem;
     }
+}
+
+/* base styles */
+
+.input {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    font: inherit;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+table.no-padding {
+    td, th {
+        padding: 0;
+    }
+}
+
+/* functional */
+
+.full-width {
+    width: 100%;
+}
+
+.flex {
+    display: flex;
+}
+
+.ml-1 {
+    margin-left: 0.5rem;
+}
+
+.mt-1 {
+    margin-top: 0.5rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.5rem;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.text-center {
+    text-align: center;
 }
