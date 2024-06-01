@@ -1,3 +1,17 @@
+export interface StartNode {
+    id: string
+    type: 'Start'
+    data: any
+    position: { x: number, y: number }
+}
+
+export interface EndNode {
+    id: string
+    type: 'End'
+    data: any
+    position: { x: number, y: number }
+}
+
 export interface Param {
     name: string
     value: string
@@ -19,23 +33,16 @@ export interface HTTPRequestNodeData {
     output: string
 }
 
-export interface SocketIONodeData {
-    url: string
-    path: string
-}
-
-export interface RootNode {
-    id: string
-    type: 'Root'
-    data: any
-    position: { x: number, y: number }
-}
-
 export interface HTTPRequestNode {
     id: string
     type: 'HTTPRequest'
     data: HTTPRequestNodeData
     position: { x: number, y: number }
+}
+
+export interface SocketIONodeData {
+    url: string
+    path: string
 }
 
 export interface SocketIONode {
@@ -45,4 +52,24 @@ export interface SocketIONode {
     position: { x: number, y: number }
 }
 
-export type Node = RootNode | HTTPRequestNode | SocketIONode
+export interface SocketIOListenerNodeData {
+    eventName: string
+}
+
+export interface SocketIOListenerNode {
+    id: string
+    type: 'SocketIOListener'
+    data: any
+    position: { x: number, y: number }
+}
+
+export type Node = RootNode | HTTPRequestNode | SocketIONode | SocketIOListenerNode
+
+export interface Edge {
+    id: string
+    source: string
+    sourceHandle: string
+    target: string
+    targetHandle: string
+    animated: boolean
+}

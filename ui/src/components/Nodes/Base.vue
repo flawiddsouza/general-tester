@@ -1,6 +1,6 @@
 <template>
-    <Handle id="input" type="source" :position="Position.Left" />
-    <Handle id="output" type="target" :position="Position.Right" />
+    <Handle id="input" type="source" :position="Position.Left" v-if="node.type !== 'Start'" />
+    <Handle id="output" type="target" :position="Position.Right" v-if="node.type !== 'End'"  />
     <div class="node">
         <div class="node-header">
             <span>{{ getNodeTitle(node.type) }}</span>
@@ -19,8 +19,12 @@ import { Handle, Position } from '@vue-flow/core'
 const props = defineProps<{ node: Node }>()
 
 function getNodeTitle(type: string) {
-    if (type === 'Root') {
+    if (type === 'Start') {
         return 'Start'
+    }
+
+    if (type === 'End') {
+        return 'End'
     }
 
     if (type === 'HTTPRequest') {
@@ -29,6 +33,10 @@ function getNodeTitle(type: string) {
 
     if (type === 'SocketIO') {
         return 'Socket.IO'
+    }
+
+    if (type === 'SocketIOListener') {
+        return 'Socket.IO Listener'
     }
 }
 

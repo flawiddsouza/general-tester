@@ -19,7 +19,7 @@
                 <label>
                     URL
                     <div>
-                        <input type="text" v-model="node.data.url" class="input full-width">
+                        <TextInput v-model="node.data.url" />
                     </div>
                 </label>
             </div>
@@ -64,6 +64,7 @@
 <script setup lang="ts">
 import { HTTPRequestNode } from '@/global'
 import Base from '@/components/Nodes/Base.vue'
+import TextInput from '@/components/TextInput.vue'
 import ParamsEditor from './ParamsEditor.vue'
 import { constants } from '@/constants';
 
