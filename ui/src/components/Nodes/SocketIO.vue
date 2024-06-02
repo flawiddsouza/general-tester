@@ -2,13 +2,25 @@
     <Base :node="node">
         <div>
             <label>
+                Version
+                <div>
+                    <select v-model="node.data.version" class="input full-width">
+                        <option :value="2">2</option>
+                        <option :value="3">3</option>
+                        <option :value="4">4</option>
+                    </select>
+                </div>
+            </label>
+        </div>
+        <div class="mt-1">
+            <label>
                 URL
                 <div>
                     <TextInput v-model="node.data.url" />
                 </div>
             </label>
         </div>
-        <div>
+        <div class="mt-1">
             <label>
                 Path
                 <div>

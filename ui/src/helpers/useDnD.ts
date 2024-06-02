@@ -40,6 +40,7 @@ function createEmptyNodeData(type: string) {
 
     if (type === 'SocketIO') {
         const data: SocketIONodeData = {
+            version: 4,
             url: '',
             path: '/socket.io',
         }

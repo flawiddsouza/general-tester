@@ -41,6 +41,7 @@ export interface HTTPRequestNode {
 }
 
 export interface SocketIONodeData {
+    version: 2 | 3 | 4
     url: string
     path: string
 }

@@ -81,7 +81,8 @@ export const useStore = defineStore('counter', {
                     id: id3,
                     type: 'SocketIO',
                     data: {
-                        url: '{{ socketUrl }}',
+                        version: 4,
+                        url: '{{ socketUrl }}?access_token=$output',
                         path: '/socket.io',
                     },
                     position: { x: 900, y: 114 },
