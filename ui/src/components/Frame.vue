@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { onBeforeMount } from 'vue'
-import { useStore } from '@/store';
+import { useStore } from '@/store'
 import NodeEditor from './NodeEditor.vue'
 import Sidebar from './Sidebar.vue'
 

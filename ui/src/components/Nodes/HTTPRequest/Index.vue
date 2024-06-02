@@ -36,7 +36,7 @@
             <label>
                 Body
                 <div>
-                    <select v-model="node.data.body.mimeType" class="input full-width mb-1" @change="bodyMimeTypeChanged($event.target.value)">
+                    <select v-model="node.data.body.mimeType" class="input full-width mb-1" @change="bodyMimeTypeChanged(($event.target as HTMLSelectElement).value)">
                         <option :value="null">No Body</option>
                         <option value="application/x-www-form-urlencoded">Form URL Encoded</option>
                         <option value="application/json">JSON</option>
@@ -47,14 +47,14 @@
                 <ParamsEditor :params="node.data.body.params"></ParamsEditor>
             </div>
             <div v-else-if="node.data.body.mimeType === 'application/json'">
-                <textarea v-model="node.data.body.text" class="input full-width"></textarea>
+                <textarea v-model="node.data.body.text" class="input full-width" spellcheck="false"></textarea>
             </div>
         </div>
         <div class="mt-1">
             <label>
                 Output
                 <div>
-                    <textarea v-model="node.data.output" class="input full-width"></textarea>
+                    <textarea v-model="node.data.output" class="input full-width" spellcheck="false"></textarea>
                 </div>
             </label>
         </div>
@@ -66,22 +66,22 @@ import { HTTPRequestNode } from '@/global'
 import Base from '@/components/Nodes/Base.vue'
 import TextInput from '@/components/TextInput.vue'
 import ParamsEditor from './ParamsEditor.vue'
-import { constants } from '@/constants';
+import { constants } from '@/constants'
 
 const props = defineProps<{ node: HTTPRequestNode }>()
 
 function bodyMimeTypeChanged(newMimeType: string | null) {
     let mimeType = null
 
-    if(newMimeType === constants.MIME_TYPE.FORM_URL_ENCODED) {
+    if (newMimeType === constants.MIME_TYPE.FORM_URL_ENCODED) {
         mimeType = constants.MIME_TYPE.FORM_URL_ENCODED
     }
 
-    if(newMimeType === constants.MIME_TYPE.JSON) {
+    if (newMimeType === constants.MIME_TYPE.JSON) {
         mimeType = constants.MIME_TYPE.JSON
     }
 
-    if(mimeType === null) {
+    if (mimeType === null) {
         for (let i = 0; i < props.node.data.headers.length; i++) {
             if (props.node.data.headers[i].name === 'Content-Type') {
                 props.node.data.headers.splice(i, 1)
@@ -92,7 +92,7 @@ function bodyMimeTypeChanged(newMimeType: string | null) {
 
     let contentTypeHeader = 'headers' in props.node.data && props.node.data.headers.find(header => header.name.toLowerCase() === 'content-type')
 
-    if(contentTypeHeader) {
+    if (contentTypeHeader) {
         contentTypeHeader.value = mimeType
     } else {
         props.node.data.headers.push({

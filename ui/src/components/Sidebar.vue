@@ -10,15 +10,10 @@
 
 <script setup>
 import useDragAndDrop from '@/helpers/useDnD'
-import { ref } from 'vue';
+import { ref } from 'vue'
+import { constants } from '@/constants'
 
 const { onDragStart } = useDragAndDrop()
 
-const nodesTypes = ref([
-    { label: 'Start', name: 'Start' },
-    { label: 'End', name: 'End' },
-    { label: 'HTTP Request', name: 'HTTPRequest' },
-    { label: 'Socket.IO', name: 'SocketIO' },
-    { label: 'Socket.IO Listener', name: 'SocketIOListener' },
-])
+const nodesTypes = ref(constants.NODE_TYPES)
 </script>

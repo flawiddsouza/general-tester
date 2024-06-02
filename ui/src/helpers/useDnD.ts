@@ -1,7 +1,7 @@
 import { useVueFlow } from '@vue-flow/core'
 import { ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
-import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData } from '@/global'
+import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData } from '@/global'
 
 const state = {
     /**
@@ -13,15 +13,15 @@ const state = {
 }
 
 function createEmptyNodeData(type: string) {
-    if(type === 'Start') {
+    if (type === 'Start') {
         return {}
     }
 
-    if(type === 'End') {
+    if (type === 'End') {
         return {}
     }
 
-    if(type === 'HTTPRequest') {
+    if (type === 'HTTPRequest') {
         const data: HTTPRequestNodeData = {
             method: 'GET',
             url: '',
@@ -38,7 +38,7 @@ function createEmptyNodeData(type: string) {
         return data
     }
 
-    if(type === 'SocketIO') {
+    if (type === 'SocketIO') {
         const data: SocketIONodeData = {
             url: '',
             path: '/socket.io',
@@ -47,9 +47,18 @@ function createEmptyNodeData(type: string) {
         return data
     }
 
-    if(type === 'SocketIOListener') {
+    if (type === 'SocketIOListener') {
         const data: SocketIOListenerNodeData = {
             eventName: '',
+        }
+
+        return data
+    }
+
+    if (type === 'SocketIOEmitter') {
+        const data: SocketIOEmitterNodeData = {
+            eventName: '',
+            eventBody: '',
         }
 
         return data

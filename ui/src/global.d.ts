@@ -59,7 +59,19 @@ export interface SocketIOListenerNodeData {
 export interface SocketIOListenerNode {
     id: string
     type: 'SocketIOListener'
-    data: any
+    data: SocketIOListenerNodeData
+    position: { x: number, y: number }
+}
+
+export interface SocketIOEmitterNodeData {
+    eventName: string
+    eventBody: string
+}
+
+export interface SocketIOEmitterNode {
+    id: string
+    type: 'SocketIOEmitter'
+    data: SocketIOEmitterNodeData
     position: { x: number, y: number }
 }
 

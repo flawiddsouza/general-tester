@@ -15,29 +15,12 @@
 <script setup lang="ts">
 import { Node } from '@/global'
 import { Handle, Position } from '@vue-flow/core'
+import { constants } from '@/constants'
 
 const props = defineProps<{ node: Node }>()
 
 function getNodeTitle(type: string) {
-    if (type === 'Start') {
-        return 'Start'
-    }
-
-    if (type === 'End') {
-        return 'End'
-    }
-
-    if (type === 'HTTPRequest') {
-        return 'HTTP Request'
-    }
-
-    if (type === 'SocketIO') {
-        return 'Socket.IO'
-    }
-
-    if (type === 'SocketIOListener') {
-        return 'Socket.IO Listener'
-    }
+    return constants.NODE_TYPES.find((node) => node.name === type)?.label
 }
 
 function removeNode() {
