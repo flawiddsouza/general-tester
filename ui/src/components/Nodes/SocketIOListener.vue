@@ -4,7 +4,7 @@
             <label>
                 Event Name To Listen To
                 <div>
-                    <TextInput v-model="node.data.eventName" />
+                    <TextInput v-model="node.data.eventName" class="nodrag" />
                 </div>
             </label>
         </div>

@@ -19,7 +19,7 @@
                 <label>
                     URL
                     <div>
-                        <TextInput v-model="node.data.url" />
+                        <TextInput v-model="node.data.url" class="nodrag" />
                     </div>
                 </label>
             </div>
@@ -47,14 +47,14 @@
                 <ParamsEditor :params="node.data.body.params"></ParamsEditor>
             </div>
             <div v-else-if="node.data.body.mimeType === 'application/json'">
-                <textarea v-model="node.data.body.text" class="input full-width" spellcheck="false"></textarea>
+                <textarea v-model="node.data.body.text" class="input full-width nodrag" spellcheck="false"></textarea>
             </div>
         </div>
         <div class="mt-1">
             <label>
                 Output
                 <div>
-                    <textarea v-model="node.data.output" class="input full-width" spellcheck="false"></textarea>
+                    <textarea v-model="node.data.output" class="input full-width nodrag" spellcheck="false"></textarea>
                 </div>
             </label>
         </div>

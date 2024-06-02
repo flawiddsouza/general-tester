@@ -4,7 +4,7 @@
             <label>
                 Event Name
                 <div>
-                    <TextInput v-model="node.data.eventName" />
+                    <TextInput v-model="node.data.eventName" class="nodrag" />
                 </div>
             </label>
         </div>
@@ -12,7 +12,7 @@
             <label>
                 Event Body
                 <div>
-                    <textarea v-model="node.data.eventBody" class="input full-width" spellcheck="false"></textarea>
+                    <textarea v-model="node.data.eventBody" class="input full-width nodrag" spellcheck="false"></textarea>
                 </div>
             </label>
         </div>

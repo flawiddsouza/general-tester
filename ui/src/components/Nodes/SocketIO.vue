@@ -16,7 +16,7 @@
             <label>
                 URL
                 <div>
-                    <TextInput v-model="node.data.url" />
+                    <TextInput v-model="node.data.url" class="nodrag" />
                 </div>
             </label>
         </div>
@@ -24,7 +24,7 @@
             <label>
                 Path
                 <div>
-                    <TextInput v-model="node.data.path" />
+                    <TextInput v-model="node.data.path" class="nodrag" />
                 </div>
             </label>
         </div>
