@@ -1,12 +1,14 @@
 <template>
     <div id="frame">
         <NodeEditor :nodes="nodes" :edges="edges" style="width: 100%; height: 100%;"></NodeEditor>
+        <Sidebar />
     </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
 import NodeEditor from './NodeEditor.vue'
+import Sidebar from './Sidebar.vue'
 import { nanoid } from 'nanoid'
 import { Node, Edge } from '@/global'
 
@@ -59,7 +61,7 @@ const nodes = reactive<Node[]>([
                 params: [],
                 text: '{"key": "value"}'
             },
-            output: "$response.body.access_token"
+            output: '$response.body.access_token'
         },
         position: { x: 350, y: 114 },
     },

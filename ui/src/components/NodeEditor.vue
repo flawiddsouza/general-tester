@@ -3,8 +3,11 @@
         :nodes="nodes"
         :edges="edges"
         :default-viewport="{ zoom: 1 }"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave"
+        @drop="onDrop"
     >
-        <Background :gap="15" />
+        <Background :gap="15" :style="{ backgroundColor: isDragOver ? '#e7f3ff' : 'transparent' }" />
 
         <template #node-Start="node">
             <Start :node="node as StartNode" />
@@ -30,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { VueFlow } from '@vue-flow/core'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Node, Edge, StartNode, EndNode, HTTPRequestNode, SocketIONode, SocketIOListenerNode } from '@/global'
 import Start from './Nodes/Start.vue'
@@ -38,6 +41,15 @@ import End from './Nodes/End.vue'
 import HTTPRequest from './Nodes/HTTPRequest/Index.vue'
 import SocketIO from './Nodes/SocketIO.vue'
 import SocketIOListener from './Nodes/SocketIOListener.vue'
+import useDragAndDrop from '@/helpers/useDnD'
 
 defineProps<{ nodes: Node[]; edges: Edge[] }>()
+
+const { onConnect, addEdges } = useVueFlow()
+const { onDragOver, onDrop, onDragLeave, isDragOver } = useDragAndDrop()
+
+onConnect((edge) => {
+    (edge as Edge).animated = true
+    addEdges([edge])
+})
 </script>

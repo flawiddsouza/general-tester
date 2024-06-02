@@ -37,7 +37,7 @@
                 Body
                 <div>
                     <select v-model="node.data.body.mimeType" class="input full-width mb-1" @change="bodyMimeTypeChanged($event.target.value)">
-                        <option value="No Body">No Body</option>
+                        <option :value="null">No Body</option>
                         <option value="application/x-www-form-urlencoded">Form URL Encoded</option>
                         <option value="application/json">JSON</option>
                     </select>
