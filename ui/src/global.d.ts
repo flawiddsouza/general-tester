@@ -73,3 +73,8 @@ export interface Edge {
     targetHandle: string
     animated: boolean
 }
+
+export interface Environment {
+    name: string,
+    env: { [key: string]: string }
+}
