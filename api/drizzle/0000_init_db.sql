@@ -8,9 +8,9 @@ CREATE TABLE `edges` (
 	`animated` integer NOT NULL,
 	`createdAt` text DEFAULT CURRENT_TIMESTAMP,
 	`updatedAt` text DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`source`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`target`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE restrict,
+	FOREIGN KEY (`source`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE restrict,
+	FOREIGN KEY (`target`) REFERENCES `nodes`(`id`) ON UPDATE no action ON DELETE restrict
 );
 --> statement-breakpoint
 CREATE TABLE `environments` (
@@ -20,7 +20,7 @@ CREATE TABLE `environments` (
 	`env` text NOT NULL,
 	`createdAt` text DEFAULT CURRENT_TIMESTAMP,
 	`updatedAt` text DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE restrict
 );
 --> statement-breakpoint
 CREATE TABLE `nodes` (
@@ -31,7 +31,7 @@ CREATE TABLE `nodes` (
 	`position` text NOT NULL,
 	`createdAt` text DEFAULT CURRENT_TIMESTAMP,
 	`updatedAt` text DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`workflowId`) REFERENCES `workflows`(`id`) ON UPDATE no action ON DELETE restrict
 );
 --> statement-breakpoint
 CREATE TABLE `workflows` (
