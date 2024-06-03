@@ -99,8 +99,8 @@ export interface Workflow {
     id: string
     name: string
     currentEnvironmentId: string | null
-    createdAt: string
-    updatedAt: string
+    createdAt?: string
+    updatedAt?: string
 }
 
 export interface WorkflowData {

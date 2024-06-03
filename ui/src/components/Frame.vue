@@ -18,6 +18,6 @@ import Sidebar from './Sidebar.vue'
 const store = useStore()
 
 onBeforeMount(() => {
-    store.fetchFlow()
+    store.fetchWorkflows()
 })
 </script>

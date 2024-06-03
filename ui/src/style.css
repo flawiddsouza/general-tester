@@ -68,11 +68,16 @@ body {
 }
 
 #sidebar {
-    padding: 1rem;
     background-color: var(--secondary-background-color);
     border-left: 1px solid var(--border-color);
     box-shadow: 0 5px 10px var(--box-shadow-color-primary);
     z-index: 1;
+
+    .sidebar-item {
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+    }
 }
 
 .tabs {
@@ -84,17 +89,27 @@ body {
     cursor: pointer;
     width: 100%;
     text-align: center;
-    border: 1px solid transparent;
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
     border-bottom: 1px solid var(--border-color);
 }
 
 .tabs > div.active {
-    border: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
     border-bottom: 0;
 }
 
 .tabs > div:not(.active) {
     color: darkgrey;
+}
+
+.tabs > div:first-child {
+    border-left: 0;
+}
+
+.tabs > div:last-child {
+    border-right: 0;
 }
 
 /* base styles */
@@ -144,8 +159,12 @@ table.no-padding {
     margin-bottom: 0.5rem;
 }
 
-.mb-2 {
-    margin-bottom: 1rem;
+.p-1 {
+    padding: 0.5rem;
+}
+
+.p-2 {
+    padding: 1rem;
 }
 
 .cursor-pointer {

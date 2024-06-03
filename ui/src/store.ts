@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { Workflow, Environment, Node, Edge } from '@/global'
 import { nanoid } from 'nanoid'
+import * as api from '@/api'
 
 interface State {
     workflows: Workflow[]
@@ -29,7 +30,32 @@ export const useStore = defineStore('counter', {
         addEdge(edge: Edge) {
             this.edges.push(edge)
         },
-        fetchFlow() {
+        async fetchWorkflows() {
+            this.workflows = await api.getWorkflows()
+            await this.fetchActiveWorkflow()
+        },
+        async createWorkflow(workflow: { name: Workflow['name'] }) {
+            await api.createWorkflow({
+                id: nanoid(),
+                name: workflow.name,
+                currentEnvironmentId: null,
+            })
+            await this.fetchWorkflows()
+        },
+        async fetchActiveWorkflow() {
+            if (!this.activeWorkflow) {
+                throw new Error('No active workflow')
+            }
+
+            const workflowData = await api.getWorkflow(this.activeWorkflow.id)
+
+            this.environments = workflowData.environments
+            this.selectedEnvironment = this.environments.find(environment => environment.id === this.activeWorkflow?.currentEnvironmentId) ?? null
+            this.nodes = workflowData.nodes
+            this.edges = workflowData.edges
+
+            return
+
             const id1 = nanoid()
             const id2 = nanoid()
             const id3 = nanoid()

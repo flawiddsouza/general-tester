@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia'
+import { cors } from '@elysiajs/cors'
 import swagger from '@elysiajs/swagger'
 import { workflow, environment, node, edge } from './schema'
 import {
@@ -18,6 +19,7 @@ import {
 } from './db'
 
 const app = new Elysia()
+    .use(cors())
     .use(swagger({
         path: '/',
         exclude: [

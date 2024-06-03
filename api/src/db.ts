@@ -11,6 +11,11 @@ import {
     edge,
 } from './schema'
 import { eq } from 'drizzle-orm'
+import { mkdir, exists } from 'node:fs/promises'
+
+if (!await exists('./data')) {
+    await mkdir('./data')
+}
 
 const sqlite = new Database('./data/store.db')
 const db = drizzle(sqlite, { schema: { workflows, environments, nodes, edges } })
