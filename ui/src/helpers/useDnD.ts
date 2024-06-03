@@ -67,7 +67,7 @@ function createEmptyNodeData(type: Node['type']) {
     }
 }
 
-export default function useDragAndDrop(store: StoreType) {
+export default function useDragAndDrop(store?: StoreType) {
     const { draggedType, isDragOver, isDragging } = state
 
     const { addNodes, screenToFlowCoordinate, onNodesInitialized, updateNode } = useVueFlow()
@@ -129,6 +129,10 @@ export default function useDragAndDrop(store: StoreType) {
 
         if (!draggedType.value) {
             throw new Error('No dragged type')
+        }
+
+        if (!store) {
+            throw new Error('No store provided')
         }
 
         const nodeId = nanoid()

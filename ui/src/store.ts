@@ -54,16 +54,39 @@ export const useStore = defineStore('counter', {
 
             await api.deleteEdge(edgeId)
         },
-        async fetchWorkflows() {
+        async fetchWorkflows(workflowId?: Workflow['id']) {
             this.workflows = await api.getWorkflows()
+            if (workflowId) {
+                this.activeWorkflow = this.workflows.find(workflow => workflow.id === workflowId) ?? null
+            }
             await this.fetchActiveWorkflow()
         },
         async createWorkflow(workflow: { name: Workflow['name'] }) {
+            const workflowId = nanoid()
+
             await api.createWorkflow({
-                id: nanoid(),
+                id: workflowId,
                 name: workflow.name,
                 currentEnvironmentId: null,
             })
+
+            await this.fetchWorkflows(workflowId)
+        },
+        async updateWorkflow(workflowId: Workflow['id'], data: Partial<Workflow>) {
+            const workflow = this.workflows.find(workflow => workflow.id === workflowId)
+            if (!workflow) {
+                throw new Error('Workflow not found')
+            }
+
+            await api.updateWorkflow(workflowId, data)
+        },
+        async deleteWorkflow(workflowId: Workflow['id']) {
+            const workflow = this.workflows.find(workflow => workflow.id === workflowId)
+            if (!workflow) {
+                throw new Error('Workflow not found')
+            }
+
+            await api.deleteWorkflow(workflowId)
             await this.fetchWorkflows()
         },
         async fetchActiveWorkflow() {

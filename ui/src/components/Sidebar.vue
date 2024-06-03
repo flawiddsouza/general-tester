@@ -6,8 +6,20 @@
             <div @click="selectedTab = 'runs'" :class="{ active: selectedTab === 'runs' }">Runs</div>
         </div>
         <div v-if="selectedTab === 'workflows'">
-            <div class="sidebar-item cursor-pointer" @click="addNewWorkflow()">+ Add new workflow</div>
-            <div class="sidebar-item cursor-pointer" v-for="workflow in store.workflows" @click="store.activeWorkflow = workflow">{{ workflow.name }}</div>
+            <div class="sidebar-item" @click="addNewWorkflow()">+ Add new workflow</div>
+            <div class="sidebar-item flex flex-jc-sb flex-ai-c" :class="{ active: store.activeWorkflow?.id === workflow.id }" v-for="workflow in store.workflows" @click="store.activeWorkflow = workflow">
+                <div>{{ workflow.name }}</div>
+                <div class="grid">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="cursor-pointer" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" @click.stop="deleteWorkflow(workflow)">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <line x1="4" y1="7" x2="20" y2="7" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                    </svg>
+                </div>
+            </div>
         </div>
         <div v-if="selectedTab === 'nodes'" class="p-2">
             <div>You can drag these nodes to the pane</div>
@@ -27,6 +39,7 @@ import useDragAndDrop from '@/helpers/useDnD'
 import { ref } from 'vue'
 import { constants } from '@/constants'
 import { useStore } from '@/store'
+import { Workflow } from '@/global';
 
 const { onDragStart } = useDragAndDrop()
 const store = useStore()
@@ -42,5 +55,13 @@ async function addNewWorkflow() {
             name: prompt,
         })
     }
+}
+
+async function deleteWorkflow(workflow: Workflow) {
+    if (!window.confirm('Are you sure you want to delete this workflow?')) {
+        return
+    }
+
+    await store.deleteWorkflow(workflow.id)
 }
 </script>
