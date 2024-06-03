@@ -1,15 +1,19 @@
-export interface StartNode {
+export interface BaseNode {
     id: string
-    type: 'Start'
-    data: any
+    workflowId: string
     position: { x: number, y: number }
+    createdAt: string
+    updatedAt: string
 }
 
-export interface EndNode {
-    id: string
+export interface StartNode extends BaseNode {
+    type: 'Start'
+    data: any
+}
+
+export interface EndNode extends BaseNode {
     type: 'End'
     data: any
-    position: { x: number, y: number }
 }
 
 export interface Param {
@@ -33,11 +37,9 @@ export interface HTTPRequestNodeData {
     output: string
 }
 
-export interface HTTPRequestNode {
-    id: string
+export interface HTTPRequestNode extends BaseNode {
     type: 'HTTPRequest'
     data: HTTPRequestNodeData
-    position: { x: number, y: number }
 }
 
 export interface SocketIONodeData {
@@ -46,22 +48,18 @@ export interface SocketIONodeData {
     path: string
 }
 
-export interface SocketIONode {
-    id: string
+export interface SocketIONode extends BaseNode {
     type: 'SocketIO'
     data: SocketIONodeData
-    position: { x: number, y: number }
 }
 
 export interface SocketIOListenerNodeData {
     eventName: string
 }
 
-export interface SocketIOListenerNode {
-    id: string
+export interface SocketIOListenerNode extends BaseNode {
     type: 'SocketIOListener'
     data: SocketIOListenerNodeData
-    position: { x: number, y: number }
 }
 
 export interface SocketIOEmitterNodeData {
@@ -69,27 +67,32 @@ export interface SocketIOEmitterNodeData {
     eventBody: string
 }
 
-export interface SocketIOEmitterNode {
-    id: string
+export interface SocketIOEmitterNode extends BaseNode {
     type: 'SocketIOEmitter'
     data: SocketIOEmitterNodeData
-    position: { x: number, y: number }
 }
 
-export type Node = RootNode | HTTPRequestNode | SocketIONode | SocketIOListenerNode
+export type Node = StartNode | EndNode | HTTPRequestNode | SocketIONode | SocketIOListenerNode | SocketIOEmitterNode
 
 export interface Edge {
     id: string
+    workflowId: string
     source: string
     sourceHandle: string
     target: string
     targetHandle: string
     animated: boolean
+    createdAt: string
+    updatedAt: string
 }
 
 export interface Environment {
-    name: string,
+    id: string
+    workflowId: string
+    name: string
     env: { [key: string]: string }
+    createdAt: string
+    updatedAt: string
 }
 
 export interface Workflow {
@@ -98,4 +101,10 @@ export interface Workflow {
     currentEnvironmentId: string | null
     createdAt: string
     updatedAt: string
+}
+
+export interface WorkflowData {
+    environments: Environment[]
+    nodes: Node[]
+    edges: Edge[]
 }

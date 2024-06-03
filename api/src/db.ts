@@ -74,11 +74,6 @@ export async function createEdge(edge: edge) {
     return await db.insert(edges).values(edge)
 }
 
-export async function updateEdge(id: edge['id'], update: Partial<edge>) {
-    return await db.update(edges).set(update)
-       .where(eq(edges.id, id))
-}
-
 export async function deleteEdge(id: edge['id']) {
     return await db.delete(edges).where(eq(edges.id, id))
 }

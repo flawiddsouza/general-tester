@@ -7,12 +7,12 @@ const state = {
     /**
      * The type of the node being dragged.
      */
-    draggedType: ref<string|null>(null),
+    draggedType: ref<Node['type']|null>(null),
     isDragOver: ref<boolean>(false),
     isDragging: ref<boolean>(false),
 }
 
-function createEmptyNodeData(type: string) {
+function createEmptyNodeData(type: Node['type']) {
     if (type === 'Start') {
         return {}
     }
@@ -75,7 +75,7 @@ export default function useDragAndDrop() {
         document.body.style.userSelect = dragging ? 'none' : ''
     })
 
-    function onDragStart(event: DragEvent, type: string) {
+    function onDragStart(event: DragEvent, type: Node['type']) {
         if (event.dataTransfer) {
             event.dataTransfer.setData('application/vueflow', type)
             event.dataTransfer.effectAllowed = 'move'
@@ -126,14 +126,21 @@ export default function useDragAndDrop() {
             y: event.clientY,
         })
 
+        if (!draggedType.value) {
+            throw new Error('No dragged type')
+        }
+
         const nodeId = nanoid()
 
         const newNode: Node = {
             id: nodeId,
+            workflowId: '1',
             type: draggedType.value,
             position,
-            data: createEmptyNodeData(draggedType.value as string),
-        }
+            data: createEmptyNodeData(draggedType.value),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        } as Node
 
         /**
          * Align node position after drop, so it's centered to the mouse

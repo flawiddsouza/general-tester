@@ -14,7 +14,6 @@ import {
     updateNode,
     deleteNode,
     createEdge,
-    updateEdge,
     deleteEdge
 } from './db'
 
@@ -82,11 +81,6 @@ const app = new Elysia()
     }, {
         body: edge
     })
-    .put('/edge/:id', ({ params, body }) => {
-        return updateEdge(params.id, body)
-    }, {
-        body: t.Partial(edge)
-    })
     .delete('/edge/:id', ({ params }) => {
         return deleteEdge(params.id)
     })
@@ -95,3 +89,5 @@ const app = new Elysia()
 console.log(
     `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
 )
+
+export type App = typeof app
