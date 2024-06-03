@@ -33,3 +33,9 @@ Run generated migrations
 ```sh
 bun drizzle-kit migrate
 ```
+
+Check database data
+
+```sh
+bun drizzle-kit studio
+```
