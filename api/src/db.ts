@@ -16,13 +16,13 @@ const sqlite = new Database('./data/store.db')
 const db = drizzle(sqlite, { schema: { workflows, environments, nodes, edges } })
 
 export async function getWorkflows() {
-    return await db.select(workflow).from(workflows)
+    return await db.select().from(workflows)
 }
 
 export async function getWorkflow(id: workflow['id']) {
-    const nodesData = await db.select(node).from(nodes).where(eq(nodes.workflow_id, id))
-    const edgesData = await db.select(edge).from(edges).where(eq(edges.workflow_id, id))
-    const environmentsData = await db.select(environment).from(environments).where(eq(environments.workflow_id, id))
+    const nodesData = await db.select().from(nodes).where(eq(nodes.workflow_id, id))
+    const edgesData = await db.select().from(edges).where(eq(edges.workflow_id, id))
+    const environmentsData = await db.select().from(environments).where(eq(environments.workflow_id, id))
 
     return {
         environments: environmentsData,
