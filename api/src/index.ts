@@ -90,7 +90,7 @@ const app = new Elysia()
     .delete('/edge/:id', ({ params }) => {
         return deleteEdge(params.id)
     })
-    .listen(3000)
+    .listen(9002)
 
 console.log(
     `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`

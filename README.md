@@ -18,7 +18,7 @@ Navigate to http://localhost:5173
 bun dev
 ```
 
-Navigate to http://localhost:3000
+Navigate to http://localhost:9002
 
 #### Migrations
 
