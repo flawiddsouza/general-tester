@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia'
+import swagger from '@elysiajs/swagger'
 import { workflow, environment, node, edge } from './schema'
 import {
     getWorkflows,
@@ -18,7 +19,19 @@ import {
 } from './db'
 
 const app = new Elysia()
-    .get('/', () => 'Hello Elysia')
+    .use(swagger({
+        path: '/',
+        exclude: [
+            '/',
+            '/json',
+        ],
+        documentation: {
+            info: {
+                title: 'General Tester API',
+                version: '1.0.0'
+            },
+        },
+    }))
     .get('/workflows', () => {
         return getWorkflows()
     })
@@ -80,5 +93,5 @@ const app = new Elysia()
     .listen(3000)
 
 console.log(
-    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+    `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
 )
