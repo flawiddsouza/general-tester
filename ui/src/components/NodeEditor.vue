@@ -54,7 +54,7 @@ import { nanoid } from 'nanoid'
 defineProps<{ nodes: Node[]; edges: Edge[] }>()
 
 const store = useStore()
-const { onConnect, addEdges } = useVueFlow()
+const { onConnect, addEdges, onNodeDragStop } = useVueFlow()
 const { onDragOver, onDrop, onDragLeave, isDragOver } = useDragAndDrop(store)
 
 onConnect((edge) => {
@@ -64,6 +64,16 @@ onConnect((edge) => {
     edgeConverted.animated = true
     addEdges([edgeConverted])
     store.addEdge(edgeConverted)
+})
+
+onNodeDragStop((event) => {
+    const node = event.node
+    store.updateNode(node.id, {
+        position: {
+            x: node.position.x,
+            y: node.position.y,
+        },
+    })
 })
 
 function handleEdgesChange(edges: EdgeChange[]) {
