@@ -201,3 +201,9 @@ table.no-padding {
 .vue-flow__node.selected > div.node {
     border-color: var(--focus-border-color);
 }
+
+.vue-flow__handle {
+    --vf-handle: #ff5892;
+    width: 10px;
+    height: 10px;
+}
