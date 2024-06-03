@@ -48,6 +48,7 @@ import SocketIO from './Nodes/SocketIO.vue'
 import SocketIOListener from './Nodes/SocketIOListener.vue'
 import SocketIOEmitter from './Nodes/SocketIOEmitter.vue'
 import { useStore } from '@/store'
+import { nanoid } from 'nanoid'
 
 defineProps<{ nodes: Node[]; edges: Edge[] }>()
 
@@ -56,7 +57,11 @@ const { onConnect, addEdges } = useVueFlow()
 const { onDragOver, onDrop, onDragLeave, isDragOver } = useDragAndDrop(store)
 
 onConnect((edge) => {
-    (edge as Edge).animated = true
-    addEdges([edge])
+    const edgeConverted: Edge = edge as Edge
+    edgeConverted.id = nanoid()
+    edgeConverted.workflowId = store.activeWorkflow?.id as string
+    edgeConverted.animated = true
+    addEdges([edgeConverted])
+    store.addEdge(edgeConverted)
 })
 </script>

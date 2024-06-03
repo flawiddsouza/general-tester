@@ -25,7 +25,6 @@ export const useStore = defineStore('counter', {
     },
     actions: {
         async addNode(node: Node) {
-            this.nodes.push(node)
             await api.createNode(node)
         },
         async updateNode(nodeId: Node['id'], data: Partial<Node>) {
@@ -34,12 +33,26 @@ export const useStore = defineStore('counter', {
                 throw new Error('Node not found')
             }
 
-            Object.assign(node, data)
-
-            await api.updateNode(nodeId, node)
+            await api.updateNode(nodeId, data)
         },
-        addEdge(edge: Edge) {
-            this.edges.push(edge)
+        async deleteNode(nodeId: Node['id']) {
+            const node = this.nodes.find(node => node.id === nodeId)
+            if (!node) {
+                throw new Error('Node not found')
+            }
+
+            await api.deleteNode(nodeId)
+        },
+        async addEdge(edge: Edge) {
+            await api.createEdge(edge)
+        },
+        async deleteEdge(edgeId: Edge['id']) {
+            const edge = this.edges.find(edge => edge.id === edgeId)
+            if (!edge) {
+                throw new Error('Edge not found')
+            }
+
+            await api.deleteEdge(edgeId)
         },
         async fetchWorkflows() {
             this.workflows = await api.getWorkflows()
