@@ -91,3 +91,11 @@ export interface Environment {
     name: string,
     env: { [key: string]: string }
 }
+
+export interface Workflow {
+    id: string
+    name: string
+    currentEnvironmentId: string | null
+    createdAt: string
+    updatedAt: string
+}
