@@ -9,6 +9,7 @@
     --border-color: #bcbcbc;
     --border-radius: 4px;
     --background-color: white;
+    --focus-border-color: #007bff;
 }
 
 html, body, #app, #frame {
@@ -69,7 +70,7 @@ body {
 
 .input:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--focus-border-color);
 }
 
 table.no-padding {
@@ -110,4 +111,10 @@ table.no-padding {
 
 .text-center {
     text-align: center;
+}
+
+/* vue flow styles */
+
+.vue-flow__node.selected > div.node {
+    border-color: var(--focus-border-color);
 }
