@@ -68,6 +68,7 @@ body {
 }
 
 #sidebar {
+    user-select: none;
     background-color: var(--secondary-background-color);
     border-left: 1px solid var(--border-color);
     box-shadow: 0 5px 10px var(--box-shadow-color-primary);

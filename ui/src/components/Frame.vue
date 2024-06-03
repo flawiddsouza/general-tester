@@ -9,13 +9,19 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount } from 'vue'
+import { watch, onBeforeMount } from 'vue'
 import { useStore } from '@/store'
 import NavBar from './NavBar.vue'
 import NodeEditor from './NodeEditor.vue'
 import Sidebar from './Sidebar.vue'
+import { storeToRefs } from 'pinia'
 
 const store = useStore()
+const { activeWorkflow } = storeToRefs(store)
+
+watch(activeWorkflow, () => {
+    store.fetchActiveWorkflow()
+})
 
 onBeforeMount(() => {
     store.fetchWorkflows()

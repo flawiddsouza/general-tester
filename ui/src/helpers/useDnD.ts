@@ -2,6 +2,7 @@ import { useVueFlow } from '@vue-flow/core'
 import { ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
 import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData } from '@/global'
+import { StoreType } from '@/store'
 
 const state = {
     /**
@@ -66,7 +67,7 @@ function createEmptyNodeData(type: Node['type']) {
     }
 }
 
-export default function useDragAndDrop() {
+export default function useDragAndDrop(store: StoreType) {
     const { draggedType, isDragOver, isDragging } = state
 
     const { addNodes, screenToFlowCoordinate, onNodesInitialized, updateNode } = useVueFlow()
@@ -134,12 +135,10 @@ export default function useDragAndDrop() {
 
         const newNode: Node = {
             id: nodeId,
-            workflowId: '1',
+            workflowId: store.activeWorkflow?.id,
             type: draggedType.value,
             position,
             data: createEmptyNodeData(draggedType.value),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
         } as Node
 
         /**
@@ -148,9 +147,13 @@ export default function useDragAndDrop() {
          * We can hook into events even in a callback, and we can remove the event listener after it's been called.
          */
         const { off } = onNodesInitialized(() => {
-            updateNode(nodeId, (node) => ({
-                position: { x: node.position.x - node.dimensions.width / 2, y: node.position.y - node.dimensions.height / 2 },
-            }))
+            updateNode(nodeId, (node) => {
+                newNode.position = { x: node.position.x - node.dimensions.width / 2, y: node.position.y - node.dimensions.height / 2 }
+                store.addNode(newNode)
+                return {
+                    position: newNode.position,
+                }
+            })
 
             off()
         })

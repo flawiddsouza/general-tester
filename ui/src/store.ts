@@ -24,8 +24,19 @@ export const useStore = defineStore('counter', {
         }
     },
     actions: {
-        addNode(node: Node) {
+        async addNode(node: Node) {
             this.nodes.push(node)
+            await api.createNode(node)
+        },
+        async updateNode(nodeId: Node['id'], data: Partial<Node>) {
+            const node = this.nodes.find(node => node.id === nodeId)
+            if (!node) {
+                throw new Error('Node not found')
+            }
+
+            Object.assign(node, data)
+
+            await api.updateNode(nodeId, node)
         },
         addEdge(edge: Edge) {
             this.edges.push(edge)
@@ -227,3 +238,5 @@ export const useStore = defineStore('counter', {
         },
     },
 })
+
+export type StoreType = ReturnType<typeof useStore>

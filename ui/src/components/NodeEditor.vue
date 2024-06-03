@@ -10,27 +10,27 @@
         <Background :gap="15" :style="{ backgroundColor: isDragOver ? '#e7f3ff' : 'transparent' }" />
 
         <template #node-Start="node">
-            <Start :node="node as StartNode" />
+            <Start :node="(node as StartNode)" />
         </template>
 
         <template #node-End="node">
-            <End :node="node as EndNode" />
+            <End :node="(node as EndNode)" />
         </template>
 
         <template #node-HTTPRequest="node">
-            <HTTPRequest :node="node as HTTPRequestNode" />
+            <HTTPRequest :node="(node as HTTPRequestNode)" />
         </template>
 
         <template #node-SocketIO="node">
-            <SocketIO :node="node as SocketIONode" />
+            <SocketIO :node="(node as SocketIONode)" />
         </template>
 
         <template #node-SocketIOListener="node">
-            <SocketIOListener :node="node as SocketIOListenerNode" />
+            <SocketIOListener :node="(node as SocketIOListenerNode)" />
         </template>
 
         <template #node-SocketIOEmitter="node">
-            <SocketIOEmitter :node="node as SocketIOEmitterNode" />
+            <SocketIOEmitter :node="(node as SocketIOEmitterNode)" />
         </template>
 
     </VueFlow>
@@ -47,11 +47,13 @@ import HTTPRequest from './Nodes/HTTPRequest/Index.vue'
 import SocketIO from './Nodes/SocketIO.vue'
 import SocketIOListener from './Nodes/SocketIOListener.vue'
 import SocketIOEmitter from './Nodes/SocketIOEmitter.vue'
+import { useStore } from '@/store'
 
 defineProps<{ nodes: Node[]; edges: Edge[] }>()
 
+const store = useStore()
 const { onConnect, addEdges } = useVueFlow()
-const { onDragOver, onDrop, onDragLeave, isDragOver } = useDragAndDrop()
+const { onDragOver, onDrop, onDragLeave, isDragOver } = useDragAndDrop(store)
 
 onConnect((edge) => {
     (edge as Edge).animated = true
