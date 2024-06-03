@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5856a2c6-2dca-4142-b351-a5c026ea49ca",
+  "id": "6c6b6857-d627-454e-bf5d-51e30a249b03",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "edges": {
@@ -14,8 +14,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "workflow_id": {
-          "name": "workflow_id",
+        "workflowId": {
+          "name": "workflowId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -75,12 +75,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "edges_workflow_id_workflows_id_fk": {
-          "name": "edges_workflow_id_workflows_id_fk",
+        "edges_workflowId_workflows_id_fk": {
+          "name": "edges_workflowId_workflows_id_fk",
           "tableFrom": "edges",
           "tableTo": "workflows",
           "columnsFrom": [
-            "workflow_id"
+            "workflowId"
           ],
           "columnsTo": [
             "id"
@@ -128,8 +128,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "workflow_id": {
-          "name": "workflow_id",
+        "workflowId": {
+          "name": "workflowId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -168,12 +168,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "environments_workflow_id_workflows_id_fk": {
-          "name": "environments_workflow_id_workflows_id_fk",
+        "environments_workflowId_workflows_id_fk": {
+          "name": "environments_workflowId_workflows_id_fk",
           "tableFrom": "environments",
           "tableTo": "workflows",
           "columnsFrom": [
-            "workflow_id"
+            "workflowId"
           ],
           "columnsTo": [
             "id"
@@ -195,8 +195,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "workflow_id": {
-          "name": "workflow_id",
+        "workflowId": {
+          "name": "workflowId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -242,12 +242,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "nodes_workflow_id_workflows_id_fk": {
-          "name": "nodes_workflow_id_workflows_id_fk",
+        "nodes_workflowId_workflows_id_fk": {
+          "name": "nodes_workflowId_workflows_id_fk",
           "tableFrom": "nodes",
           "tableTo": "workflows",
           "columnsFrom": [
-            "workflow_id"
+            "workflowId"
           ],
           "columnsTo": [
             "id"
@@ -276,8 +276,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "current_environment_id": {
-          "name": "current_environment_id",
+        "currentEnvironmentId": {
+          "name": "currentEnvironmentId",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

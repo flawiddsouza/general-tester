@@ -20,9 +20,9 @@ export async function getWorkflows() {
 }
 
 export async function getWorkflow(id: workflow['id']) {
-    const nodesData = await db.select().from(nodes).where(eq(nodes.workflow_id, id))
-    const edgesData = await db.select().from(edges).where(eq(edges.workflow_id, id))
-    const environmentsData = await db.select().from(environments).where(eq(environments.workflow_id, id))
+    const nodesData = await db.select().from(nodes).where(eq(nodes.workflowId, id))
+    const edgesData = await db.select().from(edges).where(eq(edges.workflowId, id))
+    const environmentsData = await db.select().from(environments).where(eq(environments.workflowId, id))
 
     return {
         environments: environmentsData,
