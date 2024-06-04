@@ -69,6 +69,7 @@ async function deleteWorkflow(workflow: Workflow) {
 }
 
 async function runWorkflow(workflow: Workflow) {
+    store.workflowLogs = []
     await store.runWorkflow(workflow.id)
 }
 
