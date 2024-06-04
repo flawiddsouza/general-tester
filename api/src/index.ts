@@ -107,6 +107,10 @@ const app = new Elysia()
         message(ws, message) {
             console.log('Received message from client ' + ws.id + ': ' + message)
         },
+        close(ws) {
+            connectedClients.splice(connectedClients.indexOf(ws), 1)
+            console.log('Connection closed', ws.id)
+        },
     })
     .listen(9002)
 
