@@ -19,11 +19,24 @@ import { storeToRefs } from 'pinia'
 const store = useStore()
 const { activeWorkflow } = storeToRefs(store)
 
+const localStorageKey = 'GeneralTester-ActiveWorkflowId'
+
 watch(activeWorkflow, () => {
-    store.fetchActiveWorkflow()
+    if(activeWorkflow.value) {
+        localStorage.setItem(localStorageKey, JSON.stringify(activeWorkflow.value?.id))
+        store.fetchActiveWorkflow()
+    } else {
+        localStorage.removeItem(localStorageKey)
+    }
 })
 
 onBeforeMount(() => {
-    store.fetchWorkflows()
+    const savedActiveWorkflowId = localStorage.getItem(localStorageKey)
+    if(savedActiveWorkflowId) {
+        const parsedSavedActiveWorkflowId = JSON.parse(savedActiveWorkflowId)
+        store.fetchWorkflows(parsedSavedActiveWorkflowId)
+    } else {
+        store.fetchWorkflows()
+    }
 })
 </script>
