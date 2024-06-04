@@ -16,8 +16,12 @@
 import { Node } from '@/global'
 import { Handle, Position } from '@vue-flow/core'
 import { constants } from '@/constants'
+import { watch } from 'vue'
+import { useStore } from '@/store'
 
 const props = defineProps<{ node: Node }>()
+
+const store = useStore()
 
 function getNodeTitle(type: string) {
     return constants.NODE_TYPES.find((node) => node.name === type)?.label
@@ -26,4 +30,10 @@ function getNodeTitle(type: string) {
 function removeNode() {
     console.log('remove node' + props.node.id)
 }
+
+watch(props.node.data, () => {
+    store.updateNode(props.node.id, {
+        data: props.node.data,
+    })
+})
 </script>
