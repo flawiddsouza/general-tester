@@ -49,6 +49,9 @@ export async function updateWorkflow(id: workflow['id'], update: Partial<workflo
 }
 
 export async function deleteWorkflow(id: workflow['id']) {
+    await db.delete(environments).where(eq(environments.workflowId, id))
+    await db.delete(edges).where(eq(edges.workflowId, id))
+    await db.delete(nodes).where(eq(nodes.workflowId, id))
     return await db.delete(workflows).where(eq(workflows.id, id))
 }
 
