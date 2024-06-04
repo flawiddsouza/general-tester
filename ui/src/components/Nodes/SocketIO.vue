@@ -4,7 +4,7 @@
             <label>
                 Version
                 <div>
-                    <select v-model="node.data.version" class="input full-width">
+                    <select v-model="node.data.version" class="input full-width nodrag">
                         <option :value="2">2</option>
                         <option :value="3">3</option>
                         <option :value="4">4</option>

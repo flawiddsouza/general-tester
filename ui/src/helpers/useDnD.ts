@@ -1,7 +1,7 @@
 import { useVueFlow } from '@vue-flow/core'
 import { ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
-import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData } from '@/global'
+import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData, IfConditionNodeData } from '@/global'
 import { StoreType } from '@/store'
 
 const state = {
@@ -61,6 +61,16 @@ function createEmptyNodeData(type: Node['type']) {
         const data: SocketIOEmitterNodeData = {
             eventName: '',
             eventBody: '',
+        }
+
+        return data
+    }
+
+    if (type === 'IfCondition') {
+        const data: IfConditionNodeData = {
+            leftOperand: '',
+            operator: '==',
+            rightOperand: '',
         }
 
         return data

@@ -28,5 +28,9 @@ export const constants = {
             name: 'SocketIOEmitter',
             label: 'Socket.IO Emitter'
         },
+        {
+            name: 'IfCondition',
+            label: 'If Condition'
+        },
     ],
 }

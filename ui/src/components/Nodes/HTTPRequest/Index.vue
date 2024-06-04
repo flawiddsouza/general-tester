@@ -5,7 +5,7 @@
                 <label>
                     Method
                     <div>
-                        <select v-model="node.data.method" class="input full-width">
+                        <select v-model="node.data.method" class="input full-width nodrag">
                             <option value="GET">GET</option>
                             <option value="POST">POST</option>
                             <option value="PUT">PUT</option>
@@ -36,7 +36,7 @@
             <label>
                 Body
                 <div>
-                    <select v-model="node.data.body.mimeType" class="input full-width mb-1" @change="bodyMimeTypeChanged(($event.target as HTMLSelectElement).value)">
+                    <select v-model="node.data.body.mimeType" class="input full-width mb-1 nodrag" @change="bodyMimeTypeChanged(($event.target as HTMLSelectElement).value)">
                         <option :value="null">No Body</option>
                         <option value="application/x-www-form-urlencoded">Form URL Encoded</option>
                         <option value="application/json">JSON</option>

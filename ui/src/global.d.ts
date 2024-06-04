@@ -72,7 +72,28 @@ export interface SocketIOEmitterNode extends BaseNode {
     data: SocketIOEmitterNodeData
 }
 
-export type Node = StartNode | EndNode | HTTPRequestNode | SocketIONode | SocketIOListenerNode | SocketIOEmitterNode
+// export type LogicalOperator = 'AND' | 'OR'
+export type ComparisonOperator = '==' | '!=' | '>' | '<' | '>=' | '<='
+
+export interface IfConditionNodeData {
+    leftOperand: string
+    operator: ComparisonOperator
+    rightOperand: string
+}
+
+export interface IfConditionNode extends BaseNode {
+    type: 'IfCondition'
+    data: IfConditionNodeData
+}
+
+export type Node =
+    | StartNode
+    | EndNode
+    | HTTPRequestNode
+    | SocketIONode
+    | SocketIOListenerNode
+    | SocketIOEmitterNode
+    | IfConditionNode
 
 export interface Edge {
     id: string

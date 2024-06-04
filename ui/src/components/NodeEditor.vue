@@ -35,6 +35,10 @@
             <SocketIOEmitter :node="(node as SocketIOEmitterNode)" />
         </template>
 
+        <template #node-IfCondition="node">
+            <IfCondition :node="(node as IfConditionNode)" />
+        </template>
+
     </VueFlow>
 </template>
 
@@ -42,13 +46,14 @@
 import { EdgeChange, NodeChange, VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import useDragAndDrop from '@/helpers/useDnD'
-import { Node, Edge, StartNode, EndNode, HTTPRequestNode, SocketIONode, SocketIOListenerNode, SocketIOEmitterNode } from '@/global'
+import { Node, Edge, StartNode, EndNode, HTTPRequestNode, SocketIONode, SocketIOListenerNode, SocketIOEmitterNode, IfConditionNode } from '@/global'
 import Start from './Nodes/Start.vue'
 import End from './Nodes/End.vue'
 import HTTPRequest from './Nodes/HTTPRequest/Index.vue'
 import SocketIO from './Nodes/SocketIO.vue'
 import SocketIOListener from './Nodes/SocketIOListener.vue'
 import SocketIOEmitter from './Nodes/SocketIOEmitter.vue'
+import IfCondition from './Nodes/IfCondition.vue'
 import { useStore } from '@/store'
 import { nanoid } from 'nanoid'
 
