@@ -19,6 +19,11 @@ import {
 } from './db'
 import { runWorkflow } from './workflow-helpers'
 
+export const connectedClients: {
+    id: string
+    send: (message: any) => void
+}[] = []
+
 const app = new Elysia()
     .use(cors())
     .use(swagger({
@@ -93,6 +98,15 @@ const app = new Elysia()
         runWorkflow(data)
 
         return { message: `Running workflow: ${data.workflow.name}` }
+    })
+    .ws('/ws', {
+        open(ws) {
+            connectedClients.push(ws)
+            console.log('Connection opened', ws.id)
+        },
+        message(ws, message) {
+            console.log('Received message from client ' + ws.id + ': ' + message)
+        },
     })
     .listen(9002)
 

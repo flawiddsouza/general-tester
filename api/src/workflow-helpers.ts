@@ -7,12 +7,23 @@ import type {
     SocketIOEmitterNode,
     IfConditionNode,
 } from '../../ui/src/global'
+import { connectedClients } from './index'
 
 type NodeMap = { [id: string]: node }
 type EdgeMap = { [source: string]: edge[] }
 
+function logWorkflowMessage(message: string, data?: any) {
+    console.log(message)
+    connectedClients.forEach((client) => {
+        client.send({
+            message,
+            data: data ?? null,
+        })
+    })
+}
+
 export async function runWorkflow(workflowData: WorkflowData) {
-    console.log(`Running workflow ${workflowData.workflow.name}`)
+    logWorkflowMessage(`Running workflow ${workflowData.workflow.name}`)
 
     const nodes: NodeMap = {}
     const edges: EdgeMap = {}
@@ -35,16 +46,16 @@ export async function runWorkflow(workflowData: WorkflowData) {
         throw new Error('No start node found')
     }
 
-    console.log(`Starting at node ${startNode.id}`)
+    logWorkflowMessage(`Starting at node ${startNode.id}`)
     await processNode(startNode, nodes, edges)
 }
 
 async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
-    console.log(`Processing node ${node.id} of type ${node.type}`)
+    logWorkflowMessage(`Processing node ${node.id} of type ${node.type}`)
 
     switch (node.type) {
         case 'Start':
-            console.log('Starting workflow')
+            logWorkflowMessage('Starting workflow')
             break
 
         case 'HTTPRequest':
@@ -68,7 +79,7 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
             break
 
         case 'End':
-            console.log('Ending workflow')
+            logWorkflowMessage('Ending workflow')
             return
 
         default:
@@ -79,11 +90,11 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
     const nextEdges = edges[node.id]
 
     if (!nextEdges) {
-        console.log('No next edges found, ending workflow')
+        logWorkflowMessage('No next edges found, ending workflow')
         return
     }
 
-    console.log(`Found ${nextEdges.length} next edges`)
+    logWorkflowMessage(`Found ${nextEdges.length} next edges`)
     for (const edge of nextEdges) {
         const nextNode = nodes[edge.target]
         await processNode(nextNode, nodes, edges)
@@ -91,7 +102,7 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
 }
 
 async function handleHTTPRequestNode(node: HTTPRequestNode) {
-    console.log('Handling HTTPRequest node')
+    logWorkflowMessage('Handling HTTPRequest node')
     // Perform the HTTP request, for example using fetch
     const response = await fetch(node.data.url, {
         method: node.data.method,
@@ -102,21 +113,21 @@ async function handleHTTPRequestNode(node: HTTPRequestNode) {
         body: JSON.stringify(node.data.body)
     })
     const responseData = await response.json()
-    console.log("Response data:", responseData)
+    logWorkflowMessage("Response data:", responseData)
 }
 
 function handleSocketIONode(node: SocketIONode) {
-    console.log('Handling SocketIO node', node.data)
+    logWorkflowMessage('Handling SocketIO node', node.data)
 }
 
 function handleSocketIOListenerNode(node: SocketIOListenerNode) {
-    console.log(`Handling SocketIOListener node for event ${node.data.eventName}`)
+    logWorkflowMessage(`Handling SocketIOListener node for event ${node.data.eventName}`)
 }
 
 function handleSocketIOEmitterNode(node: SocketIOEmitterNode) {
-    console.log(`Handling SocketIOEmitter node for event ${node.data.eventName}`)
+    logWorkflowMessage(`Handling SocketIOEmitter node for event ${node.data.eventName}`)
 }
 
 function handleIfConditionNode(node: IfConditionNode) {
-    console.log('Handling IfCondition node', node.data)
+    logWorkflowMessage('Handling IfCondition node', node.data)
 }

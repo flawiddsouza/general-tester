@@ -4,23 +4,27 @@ import { nanoid } from 'nanoid'
 import * as api from '@/api'
 
 interface State {
+    webSocket: WebSocket | null
     workflows: Workflow[]
     activeWorkflow: Workflow | null
     environments: Environment[]
     selectedEnvironment: Environment | null
     nodes: Node[]
     edges: Edge[]
+    workflowLogs: string[]
 }
 
 export const useStore = defineStore('counter', {
     state: (): State => {
         return {
+            webSocket: null,
             workflows: [],
             activeWorkflow: null,
             environments: [],
             selectedEnvironment: null,
             nodes: [],
             edges: [],
+            workflowLogs: [],
         }
     },
     actions: {

@@ -29,7 +29,10 @@
             </div>
         </div>
         <div v-if="selectedTab === 'runs'" class="p-2">
-            <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
+            <div>
+                <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
+            </div>
+            <div v-for="log in store.workflowLogs" class="mt-1">{{ log }}</div>
         </div>
     </aside>
 </template>
