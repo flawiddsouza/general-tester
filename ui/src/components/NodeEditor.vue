@@ -12,31 +12,31 @@
         <Background :gap="15" :style="{ backgroundColor: isDragOver ? '#e7f3ff' : 'transparent' }" />
 
         <template #node-Start="node">
-            <Start :node="(node as StartNode)" />
+            <Start :node="(node as unknown as StartNode)" />
         </template>
 
         <template #node-End="node">
-            <End :node="(node as EndNode)" />
+            <End :node="(node as unknown as EndNode)" />
         </template>
 
         <template #node-HTTPRequest="node">
-            <HTTPRequest :node="(node as HTTPRequestNode)" />
+            <HTTPRequest :node="(node as unknown as HTTPRequestNode)" />
         </template>
 
         <template #node-SocketIO="node">
-            <SocketIO :node="(node as SocketIONode)" />
+            <SocketIO :node="(node as unknown as SocketIONode)" />
         </template>
 
         <template #node-SocketIOListener="node">
-            <SocketIOListener :node="(node as SocketIOListenerNode)" />
+            <SocketIOListener :node="(node as unknown as SocketIOListenerNode)" />
         </template>
 
         <template #node-SocketIOEmitter="node">
-            <SocketIOEmitter :node="(node as SocketIOEmitterNode)" />
+            <SocketIOEmitter :node="(node as unknown as SocketIOEmitterNode)" />
         </template>
 
         <template #node-IfCondition="node">
-            <IfCondition :node="(node as IfConditionNode)" />
+            <IfCondition :node="(node as unknown as IfConditionNode)" />
         </template>
 
     </VueFlow>
