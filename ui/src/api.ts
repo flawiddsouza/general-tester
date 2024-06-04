@@ -70,3 +70,8 @@ export async function deleteEdge(id: string): Promise<void> {
     const { data } = await client.edge({ id }).delete()
     console.log(data)
 }
+
+export async function runWorkflow(id: string): Promise<void> {
+    const { data } = await client.workflow({ id }).run.post()
+    console.log(data)
+}

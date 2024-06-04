@@ -17,6 +17,7 @@ import {
     createEdge,
     deleteEdge
 } from './db'
+import { runWorkflow } from './workflow-helpers'
 
 const app = new Elysia()
     .use(cors())
@@ -85,6 +86,13 @@ const app = new Elysia()
     })
     .delete('/edge/:id', ({ params }) => {
         return deleteEdge(params.id)
+    })
+    .post('/workflow/:id/run', async({ params }) => {
+        const data = await getWorkflow(params.id)
+
+        runWorkflow(data)
+
+        return { message: `Running workflow: ${data.workflow.name}` }
     })
     .listen(9002)
 

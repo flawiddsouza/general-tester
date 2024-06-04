@@ -94,6 +94,9 @@ export const useStore = defineStore('counter', {
             this.nodes = workflowData.nodes
             this.edges = workflowData.edges
         },
+        async runWorkflow(workflowId: Workflow['id']) {
+            await api.runWorkflow(workflowId)
+        },
     },
 })
 

@@ -29,7 +29,7 @@
             </div>
         </div>
         <div v-if="selectedTab === 'runs'" class="p-2">
-            Runs
+            <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
         </div>
     </aside>
 </template>
@@ -63,5 +63,9 @@ async function deleteWorkflow(workflow: Workflow) {
     }
 
     await store.deleteWorkflow(workflow.id)
+}
+
+async function runWorkflow(workflow: Workflow) {
+    await store.runWorkflow(workflow.id)
 }
 </script>

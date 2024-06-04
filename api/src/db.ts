@@ -12,6 +12,7 @@ import {
 } from './schema'
 import { eq } from 'drizzle-orm'
 import { mkdir, exists } from 'node:fs/promises'
+import { WorkflowData } from './global'
 
 if (!await exists('./data')) {
     await mkdir('./data')
@@ -27,14 +28,16 @@ export async function getWorkflows() {
     return await db.select().from(workflows)
 }
 
-export async function getWorkflow(id: workflow['id']) {
+export async function getWorkflow(id: workflow['id']): Promise<WorkflowData> {
+    const workflowData = await db.select().from(workflows).where(eq(workflows.id, id))
     const nodesData = await db.select().from(nodes).where(eq(nodes.workflowId, id))
     const edgesData = await db.select().from(edges).where(eq(edges.workflowId, id))
     const environmentsData = await db.select().from(environments).where(eq(environments.workflowId, id))
 
     return {
-        environments: environmentsData,
-        nodes: nodesData,
+        workflow: workflowData[0],
+        environments: environmentsData as environment[],
+        nodes: nodesData as node[],
         edges: edgesData,
     }
 }

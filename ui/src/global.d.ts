@@ -125,6 +125,7 @@ export interface Workflow {
 }
 
 export interface WorkflowData {
+    workflow: Workflow
     environments: Environment[]
     nodes: Node[]
     edges: Edge[]
