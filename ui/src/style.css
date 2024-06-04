@@ -161,14 +161,6 @@ table.no-padding {
     display: flex;
 }
 
-.flex-jc-sb {
-    justify-content: space-between;
-}
-
-.flex-ai-c {
-    align-items: center;
-}
-
 .grid {
     display: grid;
 }
@@ -191,6 +183,10 @@ table.no-padding {
 
 .p-2 {
     padding: 1rem;
+}
+
+.pb-4 {
+    padding-bottom: 2rem;
 }
 
 .cursor-pointer {
