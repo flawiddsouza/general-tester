@@ -45,7 +45,7 @@ const { onDragStart } = useDragAndDrop()
 const store = useStore()
 
 const nodesTypes = ref(constants.NODE_TYPES)
-const selectedTab = ref('nodes')
+const selectedTab = ref('workflows')
 
 async function addNewWorkflow() {
     const prompt = window.prompt('Enter the name of the new workflow')

@@ -59,7 +59,6 @@ export const useStore = defineStore('counter', {
             if (workflowId) {
                 this.activeWorkflow = this.workflows.find(workflow => workflow.id === workflowId) ?? null
             }
-            await this.fetchActiveWorkflow()
         },
         async createWorkflow(workflow: { name: Workflow['name'] }) {
             const workflowId = nanoid()
@@ -87,6 +86,15 @@ export const useStore = defineStore('counter', {
             }
 
             await api.deleteWorkflow(workflowId)
+
+            if (this.activeWorkflow?.id === workflowId) {
+                this.activeWorkflow = null
+                this.environments = []
+                this.selectedEnvironment = null
+                this.nodes = []
+                this.edges = []
+            }
+
             await this.fetchWorkflows()
         },
         async fetchActiveWorkflow() {
