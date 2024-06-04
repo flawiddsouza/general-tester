@@ -23,7 +23,7 @@ function logWorkflowMessage(message: string, data?: any) {
 }
 
 export async function runWorkflow(workflowData: WorkflowData) {
-    logWorkflowMessage(`Running workflow ${workflowData.workflow.name}`)
+    logWorkflowMessage(`Running workflow: ${workflowData.workflow.name}`)
 
     const nodes: NodeMap = {}
     const edges: EdgeMap = {}
@@ -43,19 +43,20 @@ export async function runWorkflow(workflowData: WorkflowData) {
     // Find the start node
     const startNode = workflowData.nodes.find(node => node.type === 'Start')
     if (!startNode) {
-        throw new Error('No start node found')
+        logWorkflowMessage('No start node found, ending workflow run')
+        return
     }
 
-    logWorkflowMessage(`Starting at node ${startNode.id}`)
+    // logWorkflowMessage(`Starting at node ${startNode.id}`)
     await processNode(startNode, nodes, edges)
 }
 
 async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage(`Processing node ${node.id} of type ${node.type}`)
+    // logWorkflowMessage(`Processing node ${node.id} of type ${node.type}`)
 
     switch (node.type) {
         case 'Start':
-            logWorkflowMessage('Starting workflow')
+            logWorkflowMessage('Starting workflow run')
             break
 
         case 'HTTPRequest':
@@ -79,7 +80,7 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
             break
 
         case 'End':
-            logWorkflowMessage('Ending workflow')
+            logWorkflowMessage('Ending workflow run')
             return
 
         default:
@@ -90,11 +91,12 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
     const nextEdges = edges[node.id]
 
     if (!nextEdges) {
-        logWorkflowMessage('No next edges found, ending workflow')
+        logWorkflowMessage(`${node.type}: No connections found, ending workflow run`)
         return
     }
 
-    logWorkflowMessage(`Found ${nextEdges.length} next edges`)
+    logWorkflowMessage(`${node.type}: Found ${nextEdges.length} connection${nextEdges.length === 1 ? '' : 's'}`)
+
     for (const edge of nextEdges) {
         const nextNode = nodes[edge.target]
         await processNode(nextNode, nodes, edges)
