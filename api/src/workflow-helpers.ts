@@ -1,6 +1,12 @@
 import { WorkflowData } from './global'
 import { edge, node } from './schema'
-import type { EndNode, HTTPRequestNode, IfConditionNode, SocketIOEmitterNode, SocketIOListenerNode, SocketIONode, StartNode } from '../../ui/src/global'
+import type {
+    HTTPRequestNode,
+    SocketIONode,
+    SocketIOListenerNode,
+    SocketIOEmitterNode,
+    IfConditionNode,
+} from '../../ui/src/global'
 
 type NodeMap = { [id: string]: node }
 type EdgeMap = { [source: string]: edge[] }
@@ -38,7 +44,7 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
 
     switch (node.type) {
         case 'Start':
-            handleStartNode(node as StartNode)
+            console.log('Starting workflow')
             break
 
         case 'HTTPRequest':
@@ -62,7 +68,7 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
             break
 
         case 'End':
-            handleEndNode(node as EndNode)
+            console.log('Ending workflow')
             return
 
         default:
@@ -70,15 +76,18 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
     }
 
     // Process next nodes
-    const nextEdges = edges[node.id] || []
+    const nextEdges = edges[node.id]
+
+    if (!nextEdges) {
+        console.log('No next edges found, ending workflow')
+        return
+    }
+
+    console.log(`Found ${nextEdges.length} next edges`)
     for (const edge of nextEdges) {
         const nextNode = nodes[edge.target]
         await processNode(nextNode, nodes, edges)
     }
-}
-
-function handleStartNode(_node: StartNode) {
-    console.log('Handling Start node')
 }
 
 async function handleHTTPRequestNode(node: HTTPRequestNode) {
@@ -110,9 +119,4 @@ function handleSocketIOEmitterNode(node: SocketIOEmitterNode) {
 
 function handleIfConditionNode(node: IfConditionNode) {
     console.log('Handling IfCondition node', node.data)
-}
-
-// The end node does not require special handling
-function handleEndNode(_node: EndNode) {
-    console.log('Handling End node')
 }

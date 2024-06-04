@@ -1,9 +1,9 @@
 <template>
-    <Handle id="input" type="source" :position="Position.Left" v-if="node.type !== 'Start'" />
-    <Handle id="output" type="target" :position="Position.Right" v-if="node.type !== 'End' && node.type !== 'IfCondition'"  />
+    <Handle id="input" type="target" :position="Position.Left" v-if="node.type !== 'Start'" />
+    <Handle id="output" type="source" :position="Position.Right" v-if="node.type !== 'End' && node.type !== 'IfCondition'"  />
     <template v-if="node.type === 'IfCondition'">
-        <Handle id="true" type="target" :position="Position.Right" class="true">True</Handle>
-        <Handle id="false" type="target" :position="Position.Right" class="false">False</Handle>
+        <Handle id="true" type="source" :position="Position.Right" class="true">True</Handle>
+        <Handle id="false" type="source" :position="Position.Right" class="false">False</Handle>
     </template>
     <div class="node">
         <div class="node-header">
