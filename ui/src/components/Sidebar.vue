@@ -32,7 +32,7 @@
             <div>
                 <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
             </div>
-            <div v-for="log in store.workflowLogs" class="mt-1">{{ log }}</div>
+            <div v-for="log in store.workflowLogs" class="mt-1">{{ getLog(log) }}</div>
         </div>
     </aside>
 </template>
@@ -70,5 +70,17 @@ async function deleteWorkflow(workflow: Workflow) {
 
 async function runWorkflow(workflow: Workflow) {
     await store.runWorkflow(workflow.id)
+}
+
+function getLog(log: string) {
+    const parsedLog: { message: string, data: any } = JSON.parse(log)
+
+    let message = parsedLog.message
+
+    if (parsedLog.data) {
+        message += `: ${JSON.stringify(parsedLog.data, null, 4)}`
+    }
+
+    return message
 }
 </script>
