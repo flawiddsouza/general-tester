@@ -3,6 +3,7 @@
         :nodes="nodes"
         :edges="edges"
         :default-viewport="{ zoom: 1 }"
+        @nodesChange="handleNodesChange"
         @edgesChange="handleEdgesChange"
         @dragover="onDragOver"
         @dragleave="onDragLeave"
@@ -38,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { EdgeChange, VueFlow, useVueFlow } from '@vue-flow/core'
+import { EdgeChange, NodeChange, VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import useDragAndDrop from '@/helpers/useDnD'
 import { Node, Edge, StartNode, EndNode, HTTPRequestNode, SocketIONode, SocketIOListenerNode, SocketIOEmitterNode } from '@/global'
@@ -75,6 +76,14 @@ onNodeDragStop((event) => {
         },
     })
 })
+
+function handleNodesChange(nodes: NodeChange[]) {
+    nodes.forEach((node) => {
+        if (node.type === 'remove') {
+            store.deleteNode(node.id)
+        }
+    })
+}
 
 function handleEdgesChange(edges: EdgeChange[]) {
     edges.forEach((edge) => {
