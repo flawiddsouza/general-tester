@@ -18,6 +18,9 @@ if (!await exists('./data')) {
 }
 
 const sqlite = new Database('./data/store.db')
+sqlite.exec('PRAGMA journal_mode = WAL;')
+sqlite.exec('PRAGMA foreign_keys = ON;')
+
 const db = drizzle(sqlite, { schema: { workflows, environments, nodes, edges } })
 
 export async function getWorkflows() {
