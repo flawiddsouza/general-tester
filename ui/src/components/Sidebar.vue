@@ -28,11 +28,13 @@
                 <div class="node mt-1 cursor-grab p-1" :draggable="store.activeWorkflow ? true : false" @dragstart="onDragStart($event, nodesType.name)" v-for="nodesType in nodesTypes">{{ nodesType.label }}</div>
             </div>
         </div>
-        <div v-if="selectedTab === 'runs'" class="p-2">
-            <div>
+        <div v-if="selectedTab === 'runs'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
+            <div class="mb-1">
                 <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
             </div>
-            <div v-for="log in store.workflowLogs" class="mt-1">{{ getLog(log) }}</div>
+            <div>
+                <div v-for="(log, logIndex) in store.workflowLogs" :class="{ 'mt-1': logIndex > 0 }">{{ getLog(log) }}</div>
+            </div>
         </div>
     </aside>
 </template>
