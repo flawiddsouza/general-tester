@@ -8,9 +8,17 @@ import type {
     IfConditionNode,
 } from '../../ui/src/global'
 import { connectedClients } from './index'
+// @ts-ignore
+import ioV2 from 'socket.io-client-v2'
+// @ts-ignore
+import { io as ioV3 } from 'socket.io-client-v3'
+import { io as ioV4 } from 'socket.io-client-v4'
 
 type NodeMap = { [id: string]: node }
 type EdgeMap = { [source: string]: edge[] }
+type SocketMap = { [id: string]: any }
+
+const socketConnections: SocketMap = {}
 
 function logWorkflowMessage(message: string, data?: any) {
     console.log(message)
@@ -68,11 +76,11 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
             break
 
         case 'SocketIOListener':
-            handleSocketIOListenerNode(node as SocketIOListenerNode)
+            handleSocketIOListenerNode(node as SocketIOListenerNode, nodes, edges)
             break
 
         case 'SocketIOEmitter':
-            handleSocketIOEmitterNode(node as SocketIOEmitterNode)
+            handleSocketIOEmitterNode(node as SocketIOEmitterNode, nodes, edges)
             break
 
         case 'IfCondition':
@@ -118,16 +126,128 @@ async function handleHTTPRequestNode(node: HTTPRequestNode) {
     logWorkflowMessage("Response data:", responseData)
 }
 
+function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): string | null {
+    let socketIONodeId: string | null = null
+
+    function traverseIncomingEdges(currentNodeId: string) {
+        for (const sourceNodeId in edges) {
+            const edgeList = edges[sourceNodeId]
+            for (const edge of edgeList) {
+                if (edge.target === currentNodeId) {
+                    const sourceNode = nodes[edge.source]
+                    if (sourceNode.type === 'SocketIO') {
+                        socketIONodeId = sourceNode.id
+                        return  // Return early if we find the relevant node
+                    } else {
+                        traverseIncomingEdges(edge.source)
+                    }
+                }
+            }
+        }
+    }
+
+    traverseIncomingEdges(nodeId)
+    return socketIONodeId
+}
+
 function handleSocketIONode(node: SocketIONode) {
     logWorkflowMessage('Handling SocketIO node', node.data)
+
+    let socketConnection
+
+    try {
+        new URL(node.data.url)
+    } catch (error) {
+        logWorkflowMessage('Socket.IO Invalid URL:', node.data.url)
+        return
+    }
+
+    if (node.data.version === 2) {
+        socketConnection = ioV2(node.data.url, {
+            path: node.data.path,
+        })
+    }
+
+    if (node.data.version === 3) {
+        socketConnection = ioV3(node.data.url, {
+            path: node.data.path,
+            reconnection: false,
+        })
+    }
+
+    if (node.data.version === 4) {
+        socketConnection = ioV4(node.data.url, {
+            path: node.data.path,
+            reconnection: false,
+        })
+    }
+
+    socketConnections[node.id] = socketConnection
+
+    socketConnection.on('connect', () => {
+        logWorkflowMessage(`Socket.IO connected: ${node.data.url}`)
+    })
+
+    socketConnection.on('disconnect', () => {
+        logWorkflowMessage(`Socket.IO disconnected: ${node.data.url}`)
+    })
+
+    if (node.data.version === 2) {
+        const originalOnevent = socketConnection.onevent
+
+        socketConnection.onevent = function(packet: any) {
+            const event = packet.data[0]
+            const args = packet.data.slice(1)
+            const receivedMessage = `[${event}] ${typeof args[0] === 'object' ? JSON.stringify(args[0], null, 4) : args[0]}`
+            logWorkflowMessage('Socket.IO Received message:', receivedMessage)
+            originalOnevent.call(this, packet)
+        }
+    }
+
+    if (node.data.version === 3 || node.data.version === 4) {
+        socketConnection.onAny(async(event: any, ...args: any) => {
+            const receivedMessage = `[${event}] ${typeof args[0] === 'object' ? JSON.stringify(args[0], null, 4) : args[0]}`
+            logWorkflowMessage('Socket.IO Received message:', receivedMessage)
+        })
+    }
 }
 
-function handleSocketIOListenerNode(node: SocketIOListenerNode) {
+function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: NodeMap, edges: EdgeMap) {
     logWorkflowMessage(`Handling SocketIOListener node for event ${node.data.eventName}`)
+    const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
+
+    if (!socketIONodeId) {
+        logWorkflowMessage(`SocketIOListener: No SocketIONode found for node ${node.id}`)
+        return
+    }
+
+    const socket = socketConnections[socketIONodeId]
+    if (!socket) {
+        logWorkflowMessage(`SocketIOListener: No connection found for node ${socketIONodeId}`)
+        return
+    }
+
+    socket.on(node.data.eventName, (data: any) => {
+        logWorkflowMessage(`Received data for event ${node.data.eventName}:`, data)
+    })
 }
 
-function handleSocketIOEmitterNode(node: SocketIOEmitterNode) {
+function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, edges: EdgeMap) {
     logWorkflowMessage(`Handling SocketIOEmitter node for event ${node.data.eventName}`)
+    const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
+
+    if (!socketIONodeId) {
+        logWorkflowMessage(`SocketIOEmitter: No SocketIONode found for node ${node.id}`)
+        return
+    }
+
+    const socket = socketConnections[socketIONodeId]
+    if (!socket) {
+        logWorkflowMessage(`SocketIOEmitter: No connection found for node ${socketIONodeId}`)
+        return
+    }
+
+    socket.emit(node.data.eventName, node.data.eventBody)
 }
 
 function handleIfConditionNode(node: IfConditionNode) {
