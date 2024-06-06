@@ -33,9 +33,19 @@
         <div v-if="selectedTab === 'runs'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
             <div class="mb-1">
                 <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
+                <label class="ml-1 cursor-pointer">
+                    <input type="checkbox" v-model="showDebugLogs" />
+                    Show debug logs
+                </label>
             </div>
             <div style="user-select: text;">
-                <div v-for="(log, logIndex) in store.workflowLogs" :class="{ 'mt-1': logIndex > 0 }">{{ getLog(log) }}</div>
+                <div v-for="(log, logIndex) in filteredWorkflowLogs" :class="{ 'mt-1': logIndex > 0 }">
+                    <div v-if="log.nodeType">{{ log.nodeType }}</div>
+                    <div>{{ log.message }}</div>
+                    <template v-if="log.data">
+                        <textarea readonly class="full-width" style="min-height: 7rem; resize: vertical; outline: none;">{{ log.data }}</textarea>
+                    </template>
+                </div>
             </div>
         </div>
     </aside>
@@ -43,7 +53,7 @@
 
 <script setup lang="ts">
 import useDragAndDrop from '@/helpers/useDnD'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { constants } from '@/constants'
 import { useStore } from '@/store'
 import { Workflow } from '@/global';
@@ -53,6 +63,17 @@ const store = useStore()
 
 const nodesTypes = ref(constants.NODE_TYPES)
 const selectedTab = ref('workflows')
+const showDebugLogs = ref(true)
+
+const filteredWorkflowLogs = computed(() => {
+    return store.workflowLogs.filter(log => {
+        if (showDebugLogs.value) {
+            return true
+        }
+
+        return !log.debug
+    })
+})
 
 async function addNewWorkflow() {
     const prompt = window.prompt('Enter the name of the new workflow')
@@ -75,17 +96,5 @@ async function deleteWorkflow(workflow: Workflow) {
 async function runWorkflow(workflow: Workflow) {
     store.workflowLogs = []
     await store.runWorkflow(workflow.id)
-}
-
-function getLog(log: string) {
-    const parsedLog: { message: string, data: any } = JSON.parse(log)
-
-    let message = parsedLog.message
-
-    if (parsedLog.data) {
-        message += `: ${JSON.stringify(parsedLog.data, null, 4)}`
-    }
-
-    return message
 }
 </script>

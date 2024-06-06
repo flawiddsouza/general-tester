@@ -14,7 +14,7 @@ interface State {
     workflowLogs: string[]
 }
 
-export const useStore = defineStore('counter', {
+export const useStore = defineStore('store', {
     state: (): State => {
         return {
             webSocket: null,
@@ -101,6 +101,9 @@ export const useStore = defineStore('counter', {
         async runWorkflow(workflowId: Workflow['id']) {
             await api.runWorkflow(workflowId)
         },
+        addWorkflowLog(data: string) {
+            this.workflowLogs.push(JSON.parse(data))
+        }
     },
 })
 

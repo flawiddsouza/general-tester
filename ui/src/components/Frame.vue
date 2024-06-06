@@ -38,7 +38,7 @@ onBeforeMount(() => {
     })
 
     store.webSocket.addEventListener('message', event => {
-        store.workflowLogs.push(event.data)
+        store.addWorkflowLog(event.data)
     })
 
     store.webSocket.addEventListener('close', () => {

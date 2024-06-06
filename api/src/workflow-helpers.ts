@@ -20,10 +20,21 @@ type SocketMap = { [id: string]: any }
 
 const socketConnections: SocketMap = {}
 
-function logWorkflowMessage(message: string, data?: any) {
+function logWorkflowMessage({ workflowId, nodeId = null, nodeType = null, message, data = null, debug }: {
+    workflowId: string,
+    nodeId?: string | null,
+    nodeType?: string | null,
+    message: string,
+    data?: any | null,
+    debug: boolean
+}) {
     console.log(message)
     connectedClients.forEach((client) => {
         client.send({
+            workflowId,
+            nodeId,
+            nodeType,
+            debug,
             message,
             data: data ?? null,
         })
@@ -31,7 +42,11 @@ function logWorkflowMessage(message: string, data?: any) {
 }
 
 export async function runWorkflow(workflowData: WorkflowData) {
-    logWorkflowMessage(`Running workflow: ${workflowData.workflow.name}`)
+    logWorkflowMessage({
+        workflowId: workflowData.workflow.id,
+        message: `Running workflow: ${workflowData.workflow.name}`,
+        debug: true
+    })
 
     const nodes: NodeMap = {}
     const edges: EdgeMap = {}
@@ -51,20 +66,27 @@ export async function runWorkflow(workflowData: WorkflowData) {
     // Find the start node
     const startNode = workflowData.nodes.find(node => node.type === 'Start')
     if (!startNode) {
-        logWorkflowMessage('No start node found, ending workflow run')
+        logWorkflowMessage({
+            workflowId: workflowData.workflow.id,
+            message: 'No start node found, ending workflow run',
+            debug: true
+        })
         return
     }
 
-    // logWorkflowMessage(`Starting at node ${startNode.id}`)
     await processNode(startNode, nodes, edges)
 }
 
 async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
-    // logWorkflowMessage(`Processing node ${node.id} of type ${node.type}`)
-
     switch (node.type) {
         case 'Start':
-            logWorkflowMessage('Starting workflow run')
+            logWorkflowMessage({
+                workflowId: node.workflowId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Starting workflow run',
+                debug: true
+            })
             break
 
         case 'HTTPRequest':
@@ -88,22 +110,46 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
             break
 
         case 'End':
-            logWorkflowMessage('Ending workflow run')
+            logWorkflowMessage({
+                workflowId: node.workflowId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Ending workflow run',
+                debug: true
+            })
             return
 
         default:
-            throw new Error(`Unknown node type: ${node.type}`)
+            logWorkflowMessage({
+                workflowId: node.workflowId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Unknown node type',
+                debug: true
+            })
     }
 
     // Process next nodes
     const nextEdges = edges[node.id]
 
     if (!nextEdges) {
-        logWorkflowMessage(`${node.type}: No connections found, ending workflow run`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'No connections found, ending workflow run',
+            debug: true
+        })
         return
     }
 
-    logWorkflowMessage(`${node.type}: Found ${nextEdges.length} connection${nextEdges.length === 1 ? '' : 's'}`)
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Found ${nextEdges.length} connection${nextEdges.length === 1 ? '' : 's'}`,
+        debug: true
+    })
 
     for (const edge of nextEdges) {
         const nextNode = nodes[edge.target]
@@ -112,8 +158,14 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap) {
 }
 
 async function handleHTTPRequestNode(node: HTTPRequestNode) {
-    logWorkflowMessage('Handling HTTPRequest node')
-    // Perform the HTTP request, for example using fetch
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: 'Processing node',
+        data: node.data,
+        debug: true
+    })
     const response = await fetch(node.data.url, {
         method: node.data.method,
         headers: node.data.headers.reduce((acc: { [key: string]: string }, header) => {
@@ -123,7 +175,14 @@ async function handleHTTPRequestNode(node: HTTPRequestNode) {
         body: JSON.stringify(node.data.body)
     })
     const responseData = await response.json()
-    logWorkflowMessage("Response data:", responseData)
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: 'Response',
+        data: responseData,
+        debug: true
+    })
 }
 
 function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): string | null {
@@ -137,7 +196,7 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
                     const sourceNode = nodes[edge.source]
                     if (sourceNode.type === 'SocketIO') {
                         socketIONodeId = sourceNode.id
-                        return  // Return early if we find the relevant node
+                        return
                     } else {
                         traverseIncomingEdges(edge.source)
                     }
@@ -151,14 +210,28 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
 }
 
 function handleSocketIONode(node: SocketIONode) {
-    logWorkflowMessage('Handling SocketIO node', node.data)
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: 'Processing node',
+        data: node.data,
+        debug: true
+    })
 
     let socketConnection
 
     try {
         new URL(node.data.url)
     } catch (error) {
-        logWorkflowMessage('Socket.IO Invalid URL:', node.data.url)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Invalid URL',
+            data: node.data.url,
+            debug: true
+        })
         return
     }
 
@@ -185,11 +258,23 @@ function handleSocketIONode(node: SocketIONode) {
     socketConnections[node.id] = socketConnection
 
     socketConnection.on('connect', () => {
-        logWorkflowMessage(`Socket.IO connected: ${node.data.url}`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `Connected: ${node.data.url}`,
+            debug: true
+        })
     })
 
     socketConnection.on('disconnect', () => {
-        logWorkflowMessage(`Socket.IO disconnected: ${node.data.url}`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `Disconnected: ${node.data.url}`,
+            debug: true
+        })
     })
 
     if (node.data.version === 2) {
@@ -199,7 +284,14 @@ function handleSocketIONode(node: SocketIONode) {
             const event = packet.data[0]
             const args = packet.data.slice(1)
             const receivedMessage = `[${event}] ${typeof args[0] === 'object' ? JSON.stringify(args[0], null, 4) : args[0]}`
-            logWorkflowMessage('Socket.IO Received message:', receivedMessage)
+            logWorkflowMessage({
+                workflowId: node.workflowId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Received message',
+                data: receivedMessage,
+                debug: true
+            })
             originalOnevent.call(this, packet)
         }
     }
@@ -207,43 +299,94 @@ function handleSocketIONode(node: SocketIONode) {
     if (node.data.version === 3 || node.data.version === 4) {
         socketConnection.onAny(async(event: any, ...args: any) => {
             const receivedMessage = `[${event}] ${typeof args[0] === 'object' ? JSON.stringify(args[0], null, 4) : args[0]}`
-            logWorkflowMessage('Socket.IO Received message:', receivedMessage)
+            logWorkflowMessage({
+                workflowId: node.workflowId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Received message',
+                data: receivedMessage,
+                debug: true
+            })
         })
     }
 }
 
 function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage(`Handling SocketIOListener node for event ${node.data.eventName}`)
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Processing node`,
+        debug: true
+    })
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
-        logWorkflowMessage(`SocketIOListener: No SocketIONode found for node ${node.id}`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'No Socket.IO node found',
+            debug: true
+        })
         return
     }
 
     const socket = socketConnections[socketIONodeId]
     if (!socket) {
-        logWorkflowMessage(`SocketIOListener: No connection found for node ${socketIONodeId}`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `No connection found for node ${socketIONodeId}`,
+            debug: true
+        })
         return
     }
 
     socket.on(node.data.eventName, (data: any) => {
-        logWorkflowMessage(`Received data for event ${node.data.eventName}:`, data)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `Received data for event ${node.data.eventName}:`,
+            data,
+            debug: true
+        })
     })
 }
 
 function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage(`Handling SocketIOEmitter node for event ${node.data.eventName}`)
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Processing node`,
+        data: node.data,
+        debug: true
+    })
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
-        logWorkflowMessage(`SocketIOEmitter: No SocketIONode found for node ${node.id}`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'No Socket.IO node found',
+            debug: true
+        })
         return
     }
 
     const socket = socketConnections[socketIONodeId]
     if (!socket) {
-        logWorkflowMessage(`SocketIOEmitter: No connection found for node ${socketIONodeId}`)
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `No connection found for node ${socketIONodeId}`,
+            debug: true
+        })
         return
     }
 
@@ -251,5 +394,12 @@ function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, ed
 }
 
 function handleIfConditionNode(node: IfConditionNode) {
-    logWorkflowMessage('Handling IfCondition node', node.data)
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: 'Processing node',
+        data: node.data,
+        debug: true
+    })
 }
