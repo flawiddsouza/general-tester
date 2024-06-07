@@ -34,7 +34,6 @@ export interface HTTPRequestNodeData {
     queryParams: Param[]
     headers: Param[]
     body: HTTPRequestNodeDataBody
-    output: string
 }
 
 export interface HTTPRequestNode extends BaseNode {

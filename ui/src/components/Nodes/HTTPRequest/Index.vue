@@ -50,14 +50,6 @@
                 <textarea v-model="node.data.body.text" class="input full-width nodrag" spellcheck="false"></textarea>
             </div>
         </div>
-        <div class="mt-1">
-            <label>
-                Output
-                <div>
-                    <textarea v-model="node.data.output" class="input full-width nodrag" spellcheck="false"></textarea>
-                </div>
-            </label>
-        </div>
     </Base>
 </template>
 

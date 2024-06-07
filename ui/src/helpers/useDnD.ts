@@ -33,7 +33,6 @@ function createEmptyNodeData(type: Node['type']) {
                 params: [],
                 text: ''
             },
-            output: '$response'
         }
 
         return data
