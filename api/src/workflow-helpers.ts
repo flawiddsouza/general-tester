@@ -113,8 +113,25 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: 
 
         case 'IfCondition':
             input = previousNode ? outputs[previousNode.id] : {}
-            outputs[node.id] = handleIfConditionNode(node as IfConditionNode, input)
-            break
+            const conditionResult = handleIfConditionNode(node as IfConditionNode, input)
+            outputs[node.id] = conditionResult
+
+            const ifEdges = edges[node.id] || []
+            const nextEdge = ifEdges.find(e => conditionResult ? e.sourceHandle === 'true' : e.sourceHandle === 'false')
+
+            if (nextEdge) {
+                const nextNode = nodes[nextEdge.target]
+                await processNode(nextNode, nodes, edges, outputs, node)
+            } else {
+                logWorkflowMessage({
+                    workflowId: node.workflowId,
+                    nodeId: node.id,
+                    nodeType: node.type,
+                    message: `No matching connection found for condition ${conditionResult}`,
+                    debug: true
+                })
+            }
+            return
 
         case 'End':
             logWorkflowMessage({
@@ -180,7 +197,7 @@ async function handleHTTPRequestNode(node: HTTPRequestNode) {
             acc[header.name] = header.value
             return acc
         }, {}),
-        body: JSON.stringify(node.data.body)
+        body: node.data.method !== 'GET' ? JSON.stringify(node.data.body) : null
     })
 
     const responseData = await response.json()
