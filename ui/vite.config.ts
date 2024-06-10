@@ -14,4 +14,8 @@ export default defineConfig({
         vue(),
         !process.env.VITEST ? checker({ typescript: true }) : undefined,
     ],
+    build: {
+        emptyOutDir: true,
+        outDir: path.resolve(__dirname, '..', 'api', 'public'),
+    }
 })

@@ -6,6 +6,7 @@ import type {
     SocketIOListenerNode,
     SocketIOEmitterNode,
     IfConditionNode,
+    WorkflowLog,
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
@@ -22,14 +23,7 @@ type NodeOutput = { [nodeId: string]: any }
 
 const socketConnections: SocketMap = {}
 
-function logWorkflowMessage({ workflowId, nodeId = null, nodeType = null, message, data = null, debug }: {
-    workflowId: string,
-    nodeId?: string | null,
-    nodeType?: string | null,
-    message: string,
-    data?: any | null,
-    debug: boolean
-}) {
+function logWorkflowMessage({ workflowId, nodeId = null, nodeType = null, message, data = null, debug }: WorkflowLog) {
     // console.log(message)
     connectedClients.forEach((client) => {
         client.send({

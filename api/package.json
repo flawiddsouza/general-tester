@@ -3,12 +3,13 @@
   "version": "1.0.50",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.0.2",
+    "@elysiajs/static": "^1.0.3",
     "@elysiajs/swagger": "^1.0.5",
-    "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.31.0",
     "drizzle-typebox": "^0.1.1",
     "elysia": "latest",
@@ -17,6 +18,7 @@
     "socket.io-client-v4": "npm:socket.io-client@^4.7.4"
   },
   "devDependencies": {
+    "better-sqlite3": "^11.0.0",
     "bun-types": "latest",
     "drizzle-kit": "^0.22.1"
   },

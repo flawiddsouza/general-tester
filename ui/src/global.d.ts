@@ -129,3 +129,12 @@ export interface WorkflowData {
     nodes: Node[]
     edges: Edge[]
 }
+
+export interface WorkflowLog {
+    workflowId: string,
+    nodeId?: string | null,
+    nodeType?: string | null,
+    message: string,
+    data?: any | null,
+    debug: boolean
+}

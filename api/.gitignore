@@ -42,4 +42,7 @@ package-lock.json
 **/*.bun
 
 # local data
-/data
+data/
+
+# ui
+public/

@@ -18,27 +18,14 @@ import {
     deleteEdge
 } from './db'
 import { runWorkflow } from './workflow-helpers'
+import { staticPlugin } from '@elysiajs/static'
 
 export const connectedClients: {
     id: string
     send: (message: any) => void
 }[] = []
 
-const app = new Elysia()
-    .use(cors())
-    .use(swagger({
-        path: '/',
-        exclude: [
-            '/',
-            '/json',
-        ],
-        documentation: {
-            info: {
-                title: 'General Tester API',
-                version: '1.0.0'
-            },
-        },
-    }))
+const api = new Elysia({ prefix: '/api' })
     .get('/workflows', () => {
         return getWorkflows()
     })
@@ -99,6 +86,26 @@ const app = new Elysia()
 
         return { message: `Running workflow: ${data.workflow.name}` }
     })
+
+const app = new Elysia()
+    .use(cors())
+    .use(swagger({
+        path: '/api',
+        exclude: [
+            '/api',
+            '/api/json',
+        ],
+        documentation: {
+            info: {
+                title: 'General Tester API',
+                version: '1.0.0'
+            },
+        },
+    }))
+    .use(staticPlugin({
+        prefix: '/',
+    }))
+    .use(api)
     .ws('/ws', {
         open(ws) {
             connectedClients.push(ws)

@@ -39,3 +39,17 @@ Check database data
 ```sh
 bun drizzle-kit studio
 ```
+
+### Docker
+
+Build
+
+```sh
+docker build -t flawiddsouza/general-tester:0.0.1 .
+```
+
+Run
+
+```sh
+docker run --name general-tester -it -p 9002:9002 flawiddsouza/general-tester:0.0.1
+```

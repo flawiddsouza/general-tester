@@ -3,11 +3,11 @@
         :nodes="nodes"
         :edges="edges"
         :default-viewport="{ zoom: 1 }"
-        @nodesChange="handleNodesChange"
-        @edgesChange="handleEdgesChange"
-        @dragover="onDragOver"
+        @nodesChange="(handleNodesChange as any)"
+        @edgesChange="(handleEdgesChange as any)"
+        @dragover="(onDragOver as any)"
         @dragleave="onDragLeave"
-        @drop="onDrop"
+        @drop="(onDrop as any)"
     >
         <Background :gap="15" :style="{ backgroundColor: isDragOver ? '#e7f3ff' : 'transparent' }" />
 

@@ -27,7 +27,7 @@
             <div>You can drag these nodes to the pane</div>
 
             <div class="nodes">
-                <div class="node mt-1 cursor-grab p-1" :draggable="store.activeWorkflow ? true : false" @dragstart="onDragStart($event, nodesType.name)" v-for="nodesType in nodesTypes">{{ nodesType.label }}</div>
+                <div class="node mt-1 cursor-grab p-1" :draggable="store.activeWorkflow ? true : false" @dragstart="onDragStart($event, nodesType.name as any)" v-for="nodesType in nodesTypes">{{ nodesType.label }}</div>
             </div>
         </div>
         <div v-if="selectedTab === 'runs'" class="p-2 grid" style="grid-template-rows: auto 1fr;">

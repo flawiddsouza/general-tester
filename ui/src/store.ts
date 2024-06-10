@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Workflow, Environment, Node, Edge } from '@/global'
+import { Workflow, Environment, Node, Edge, WorkflowLog } from '@/global'
 import { nanoid } from 'nanoid'
 import * as api from '@/api'
 
@@ -11,7 +11,7 @@ interface State {
     selectedEnvironment: Environment | null
     nodes: Node[]
     edges: Edge[]
-    workflowLogs: string[]
+    workflowLogs: WorkflowLog []
 }
 
 export const useStore = defineStore('store', {
