@@ -29,6 +29,18 @@ export const constants = {
             label: 'Socket.IO Emitter'
         },
         {
+            name: 'WebSocket',
+            label: 'WebSocket'
+        },
+        {
+            name: 'WebSocketListener',
+            label: 'WebSocket Listener'
+        },
+        {
+            name: 'WebSocketEmitter',
+            label: 'WebSocket Emitter'
+        },
+        {
             name: 'IfCondition',
             label: 'If Condition'
         },

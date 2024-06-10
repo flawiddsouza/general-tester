@@ -6,9 +6,9 @@
         <Handle id="false" type="source" :position="Position.Right" class="false">False</Handle>
     </template>
     <div class="node">
-        <div class="node-header">
+        <div class="node-header" style="gap: 1rem;">
             <span>{{ getNodeTitle(node.type) }}</span>
-            <a href="#" @click.prevent="removeNode">Remove</a>
+            <DeleteIcon @click.prevent="removeNode()" class="nodrag cursor-pointer" />
         </div>
         <div class="node-content">
             <slot></slot>
@@ -22,6 +22,7 @@ import { Handle, Position } from '@vue-flow/core'
 import { constants } from '@/constants'
 import { watch } from 'vue'
 import { useStore } from '@/store'
+import { DeleteIcon } from '@/components/Icons'
 
 const props = defineProps<{ node: Node }>()
 
@@ -31,8 +32,13 @@ function getNodeTitle(type: string) {
     return constants.NODE_TYPES.find((node) => node.name === type)?.label
 }
 
-function removeNode() {
-    console.log('remove node' + props.node.id)
+async function removeNode() {
+    if (!confirm('Are you sure you want to delete this node?')) {
+        return
+    }
+
+    await store.deleteNode(props.node.id)
+    await store.fetchActiveWorkflow()
 }
 
 watch(props.node.data, () => {

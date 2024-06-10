@@ -71,6 +71,33 @@ export interface SocketIOEmitterNode extends BaseNode {
     data: SocketIOEmitterNodeData
 }
 
+export interface WebSocketNodeData {
+    url: string
+}
+
+export interface WebSocketNode extends BaseNode {
+    type: 'WebSocket'
+    data: WebSocketNodeData
+}
+
+export interface WebSocketListenerNodeData {
+    eventName: 'open' | 'message' | 'close' | 'error'
+}
+
+export interface WebSocketListenerNode extends BaseNode {
+    type: 'WebSocketListener'
+    data: WebSocketListenerNodeData
+}
+
+export interface WebSocketEmitterNodeData {
+    eventBody: string
+}
+
+export interface WebSocketEmitterNode extends BaseNode {
+    type: 'WebSocketEmitter'
+    data: WebSocketEmitterNodeData
+}
+
 // export type LogicalOperator = 'AND' | 'OR'
 export type ComparisonOperator = '==' | '!=' | '>' | '<' | '>=' | '<='
 
@@ -92,6 +119,9 @@ export type Node =
     | SocketIONode
     | SocketIOListenerNode
     | SocketIOEmitterNode
+    | WebSocketNode
+    | WebSocketListenerNode
+    | WebSocketEmitterNode
     | IfConditionNode
 
 export interface Edge {

@@ -1,7 +1,7 @@
 import { useVueFlow } from '@vue-flow/core'
 import { ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
-import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData, IfConditionNodeData } from '@/global'
+import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData, IfConditionNodeData, WebSocketNodeData, WebSocketListenerNodeData, WebSocketEmitterNodeData } from '@/global'
 import { StoreType } from '@/store'
 
 const state = {
@@ -59,6 +59,30 @@ function createEmptyNodeData(type: Node['type']) {
     if (type === 'SocketIOEmitter') {
         const data: SocketIOEmitterNodeData = {
             eventName: '',
+            eventBody: '',
+        }
+
+        return data
+    }
+
+    if (type === 'WebSocket') {
+        const data: WebSocketNodeData = {
+            url: '',
+        }
+
+        return data
+    }
+
+    if (type === 'WebSocketListener') {
+        const data: WebSocketListenerNodeData = {
+            eventName: 'open',
+        }
+
+        return data
+    }
+
+    if (type === 'WebSocketEmitter') {
+        const data: WebSocketEmitterNodeData = {
             eventBody: '',
         }
 

@@ -7,6 +7,9 @@ import type {
     SocketIOEmitterNode,
     IfConditionNode,
     WorkflowLog,
+    WebSocketNode,
+    WebSocketListenerNode,
+    WebSocketEmitterNode,
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
@@ -18,10 +21,12 @@ import * as vm from 'vm'
 
 type NodeMap = { [id: string]: node }
 type EdgeMap = { [source: string]: edge[] }
-type SocketMap = { [id: string]: any }
+type SocketIoMap = { [id: string]: any }
+type WebSocketMap = { [id: string]: WebSocket }
 type NodeOutput = { [nodeId: string]: any }
 
-const socketConnections: SocketMap = {}
+const socketIoConnections: SocketIoMap = {}
+const webSocketConnections: WebSocketMap = {}
 
 function logWorkflowMessage({ workflowId, nodeId = null, nodeType = null, message, data = null, debug }: WorkflowLog) {
     // console.log(message)
@@ -103,6 +108,19 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: 
 
         case 'SocketIOEmitter':
             handleSocketIOEmitterNode(node as SocketIOEmitterNode, nodes, edges)
+            break
+
+        case 'WebSocket':
+            input = previousNode ? outputs[previousNode.id] : {}
+            handleWebSocketNode(node as WebSocketNode, input)
+            break
+
+        case 'WebSocketListener':
+            outputs[node.id] = await handleWebSocketListenerNode(node as WebSocketListenerNode, nodes, edges)
+            break
+
+        case 'WebSocketEmitter':
+            handleWebSocketEmitterNode(node as WebSocketEmitterNode, nodes, edges)
             break
 
         case 'IfCondition':
@@ -278,7 +296,7 @@ function handleSocketIONode(node: SocketIONode, _input: any) {
         })
     }
 
-    socketConnections[node.id] = socketConnection
+    socketIoConnections[node.id] = socketConnection
 
     socketConnection.on('connect', () => {
         logWorkflowMessage({
@@ -342,6 +360,7 @@ async function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: Nod
         message: `Processing node`,
         debug: true
     })
+
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
@@ -355,7 +374,7 @@ async function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: Nod
         return
     }
 
-    const socket = socketConnections[socketIONodeId]
+    const socket = socketIoConnections[socketIONodeId]
     if (!socket) {
         logWorkflowMessage({
             workflowId: node.workflowId,
@@ -395,6 +414,7 @@ function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, ed
         data: node.data,
         debug: true
     })
+
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
@@ -408,7 +428,7 @@ function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, ed
         return
     }
 
-    const socket = socketConnections[socketIONodeId]
+    const socket = socketIoConnections[socketIONodeId]
     if (!socket) {
         logWorkflowMessage({
             workflowId: node.workflowId,
@@ -421,6 +441,197 @@ function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, ed
     }
 
     socket.emit(node.data.eventName, node.data.eventBody)
+}
+
+
+function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): string | null {
+    let webSocketNodeId: string | null = null
+
+    function traverseIncomingEdges(currentNodeId: string) {
+        for (const sourceNodeId in edges) {
+            const edgeList = edges[sourceNodeId]
+            for (const edge of edgeList) {
+                if (edge.target === currentNodeId) {
+                    const sourceNode = nodes[edge.source]
+                    if (sourceNode.type === 'WebSocket') {
+                        webSocketNodeId = sourceNode.id
+                        return
+                    } else {
+                        traverseIncomingEdges(edge.source)
+                    }
+                }
+            }
+        }
+    }
+
+    traverseIncomingEdges(nodeId)
+    return webSocketNodeId
+}
+
+function handleWebSocketNode(node: WebSocketNode, _input: any) {
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: 'Processing node',
+        data: node.data,
+        debug: true
+    })
+
+    let socketConnection
+
+    try {
+        new URL(node.data.url)
+    } catch (error) {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Invalid URL',
+            data: node.data.url,
+            debug: true
+        })
+        return
+    }
+
+    socketConnection = new WebSocket(node.data.url)
+
+    webSocketConnections[node.id] = socketConnection
+
+    socketConnection.addEventListener('open', () => {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Connected',
+            debug: true
+        })
+    })
+
+    socketConnection.addEventListener('message', event => {
+        const receivedMessage = event.data
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Received message',
+            data: receivedMessage,
+            debug: true
+        })
+    })
+
+    socketConnection.addEventListener('close', () => {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Disconnected',
+            debug: true
+        })
+    })
+
+    socketConnection.addEventListener('error', (event) => {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Error',
+            data: event,
+            debug: true
+        })
+    })
+}
+
+async function handleWebSocketListenerNode(node: WebSocketListenerNode, nodes: NodeMap, edges: EdgeMap) {
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Processing node`,
+        debug: true
+    })
+
+    const webSocketNodeId = findWebSocketNodeId(node.id, nodes, edges)
+
+    if (!webSocketNodeId) {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'No WebSocket node found',
+            debug: true
+        })
+        return
+    }
+
+    const socket = webSocketConnections[webSocketNodeId]
+    if (!socket) {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `No connection found for node ${webSocketNodeId}`,
+            debug: true
+        })
+        return
+    }
+
+    return new Promise((resolve) => {
+        socket.addEventListener(node.data.eventName, (event: any) => {
+            const data = event.data
+            logWorkflowMessage({
+                workflowId: node.workflowId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: `Received event: ${node.data.eventName}`,
+                data,
+                debug: true
+            })
+            if(data !== undefined) {
+                resolve(JSON.parse(data))
+            } else {
+                resolve(undefined)
+            }
+        })
+    })
+}
+
+function handleWebSocketEmitterNode(node: WebSocketEmitterNode, nodes: NodeMap, edges: EdgeMap) {
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Processing node`,
+        data: node.data,
+        debug: true
+    })
+
+    const webSocketNodeId = findWebSocketNodeId(node.id, nodes, edges)
+
+    if (!webSocketNodeId) {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'No WebSocket node found',
+            debug: true
+        })
+        return
+    }
+
+    const socket = webSocketConnections[webSocketNodeId]
+    if (!socket) {
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: `No connection found for node ${webSocketNodeId}`,
+            debug: true
+        })
+        return
+    }
+
+    socket.send(node.data.eventBody)
 }
 
 function handleIfConditionNode(node: IfConditionNode, input: any) {

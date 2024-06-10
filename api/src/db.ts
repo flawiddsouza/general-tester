@@ -81,6 +81,8 @@ export async function updateNode(id: node['id'], update: Partial<node>) {
 }
 
 export async function deleteNode(id: node['id']) {
+    await db.delete(edges).where(eq(edges.source, id))
+    await db.delete(edges).where(eq(edges.target, id))
     return await db.delete(nodes).where(eq(nodes.id, id))
 }
 
