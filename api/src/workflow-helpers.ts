@@ -29,9 +29,11 @@ const socketIoConnections: SocketIoMap = {}
 const webSocketConnections: WebSocketMap = {}
 
 function logWorkflowMessage({ workflowId, nodeId = null, nodeType = null, message, data = null, debug }: WorkflowLog) {
-    // console.log(message)
+    const timestamp = new Date().toISOString()
+
     connectedClients.forEach((client) => {
         client.send({
+            timestamp,
             workflowId,
             nodeId,
             nodeType,
@@ -43,12 +45,6 @@ function logWorkflowMessage({ workflowId, nodeId = null, nodeType = null, messag
 }
 
 export async function runWorkflow(workflowData: WorkflowData) {
-    logWorkflowMessage({
-        workflowId: workflowData.workflow.id,
-        message: `Running workflow: ${workflowData.workflow.name}`,
-        debug: true
-    })
-
     const nodes: NodeMap = {}
     const edges: EdgeMap = {}
     const outputs: NodeOutput = {}
@@ -71,7 +67,7 @@ export async function runWorkflow(workflowData: WorkflowData) {
         logWorkflowMessage({
             workflowId: workflowData.workflow.id,
             message: 'No start node found, ending workflow run',
-            debug: true
+            debug: false,
         })
         return
     }
@@ -80,17 +76,29 @@ export async function runWorkflow(workflowData: WorkflowData) {
 }
 
 async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null = null) {
+    let message = 'Processing node'
+
+    if (node.type === 'Start') {
+        message = 'Starting workflow run'
+    }
+
+    if (node.type === 'End') {
+        message = 'Ending workflow run'
+    }
+
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message,
+        data: Object.keys(node.data as []).length === 0 ? null : node.data,
+        debug: false,
+    })
+
     let input: any
 
     switch (node.type) {
         case 'Start':
-            logWorkflowMessage({
-                workflowId: node.workflowId,
-                nodeId: node.id,
-                nodeType: node.type,
-                message: 'Starting workflow run',
-                debug: true
-            })
             break
 
         case 'HTTPRequest':
@@ -146,13 +154,6 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: 
             return
 
         case 'End':
-            logWorkflowMessage({
-                workflowId: node.workflowId,
-                nodeId: node.id,
-                nodeType: node.type,
-                message: 'Ending workflow run',
-                debug: true
-            })
             return
 
         default:
@@ -169,23 +170,23 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: 
     const nextEdges = edges[node.id]
 
     if (!nextEdges) {
-        // logWorkflowMessage({
-        //     workflowId: node.workflowId,
-        //     nodeId: node.id,
-        //     nodeType: node.type,
-        //     message: 'No connections found',
-        //     debug: true
-        // })
+        logWorkflowMessage({
+            workflowId: node.workflowId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'No connections found',
+            debug: true
+        })
         return
     }
 
-    // logWorkflowMessage({
-    //     workflowId: node.workflowId,
-    //     nodeId: node.id,
-    //     nodeType: node.type,
-    //     message: `Found ${nextEdges.length} connection${nextEdges.length === 1 ? '' : 's'}`,
-    //     debug: true
-    // })
+    logWorkflowMessage({
+        workflowId: node.workflowId,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Found ${nextEdges.length} connection${nextEdges.length === 1 ? '' : 's'}`,
+        debug: true
+    })
 
     // Execute tasks in parallel
     await Promise.all(
@@ -197,15 +198,6 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: 
 }
 
 async function handleHTTPRequestNode(node: HTTPRequestNode) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: 'Processing node',
-        data: node.data,
-        debug: true
-    })
-
     const response = await fetch(node.data.url, {
         method: node.data.method,
         headers: node.data.headers.reduce((acc: { [key: string]: string }, header) => {
@@ -223,7 +215,7 @@ async function handleHTTPRequestNode(node: HTTPRequestNode) {
         nodeType: node.type,
         message: 'Response',
         data: responseData,
-        debug: true
+        debug: false,
     })
 
     return responseData
@@ -254,15 +246,6 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
 }
 
 function handleSocketIONode(node: SocketIONode, _input: any) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: 'Processing node',
-        data: node.data,
-        debug: true
-    })
-
     let socketConnection
 
     try {
@@ -356,14 +339,6 @@ function handleSocketIONode(node: SocketIONode, _input: any) {
 }
 
 async function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: `Processing node`,
-        debug: true
-    })
-
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
@@ -397,7 +372,7 @@ async function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: Nod
                 nodeType: node.type,
                 message: `Received event: ${node.data.eventName}`,
                 data,
-                debug: true
+                debug: false
             })
             if(data !== undefined) {
                 resolve(JSON.parse(data))
@@ -409,15 +384,6 @@ async function handleSocketIOListenerNode(node: SocketIOListenerNode, nodes: Nod
 }
 
 function handleSocketIOEmitterNode(node: SocketIOEmitterNode, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: `Processing node`,
-        data: node.data,
-        debug: true
-    })
-
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
@@ -472,15 +438,6 @@ function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): st
 }
 
 function handleWebSocketNode(node: WebSocketNode, _input: any) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: 'Processing node',
-        data: node.data,
-        debug: true
-    })
-
     let socketConnection
 
     try {
@@ -546,14 +503,6 @@ function handleWebSocketNode(node: WebSocketNode, _input: any) {
 }
 
 async function handleWebSocketListenerNode(node: WebSocketListenerNode, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: `Processing node`,
-        debug: true
-    })
-
     const webSocketNodeId = findWebSocketNodeId(node.id, nodes, edges)
 
     if (!webSocketNodeId) {
@@ -588,7 +537,7 @@ async function handleWebSocketListenerNode(node: WebSocketListenerNode, nodes: N
                 nodeType: node.type,
                 message: `Received event: ${node.data.eventName}`,
                 data,
-                debug: true
+                debug: false
             })
             if(data !== undefined) {
                 resolve(JSON.parse(data))
@@ -600,15 +549,6 @@ async function handleWebSocketListenerNode(node: WebSocketListenerNode, nodes: N
 }
 
 function handleWebSocketEmitterNode(node: WebSocketEmitterNode, nodes: NodeMap, edges: EdgeMap) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: `Processing node`,
-        data: node.data,
-        debug: true
-    })
-
     const webSocketNodeId = findWebSocketNodeId(node.id, nodes, edges)
 
     if (!webSocketNodeId) {
@@ -638,15 +578,6 @@ function handleWebSocketEmitterNode(node: WebSocketEmitterNode, nodes: NodeMap, 
 }
 
 function handleIfConditionNode(node: IfConditionNode, input: any) {
-    logWorkflowMessage({
-        workflowId: node.workflowId,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: 'Processing node',
-        data: node.data,
-        debug: true
-    })
-
     const context = {
         $input: input
     }
@@ -705,7 +636,7 @@ function handleIfConditionNode(node: IfConditionNode, input: any) {
         nodeId: node.id,
         nodeType: node.type,
         message: `Condition ${conditionMet ? 'met' : 'not met'}`,
-        debug: true
+        debug: false,
     })
 
     return conditionMet

@@ -161,6 +161,7 @@ export interface WorkflowData {
 }
 
 export interface WorkflowLog {
+    timestamp?: string,
     workflowId: string,
     nodeId?: string | null,
     nodeType?: string | null,

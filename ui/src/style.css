@@ -201,6 +201,10 @@ table.no-padding {
     text-align: center;
 }
 
+.bold {
+    font-weight: bold;
+}
+
 /* vue flow styles */
 
 .vue-flow__node.selected > div.node {

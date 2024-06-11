@@ -35,8 +35,9 @@
                 </label>
             </div>
             <div style="user-select: text;">
-                <div v-for="(log, logIndex) in filteredWorkflowLogs" :class="{ 'mt-1': logIndex > 0 }">
-                    <div v-if="log.nodeType">{{ log.nodeType }}</div>
+                <div v-for="(log, logIndex) in filteredWorkflowLogs" :class="{ 'mt-1': logIndex > 0 }" :style="{ 'backgroundColor': log.debug ? '#c8cfff' : '', padding: log.debug ? '0.5rem' : '' }">
+                    <div style="font-size: 0.7rem; color: #797979;">{{ formatTimestamp(log.timestamp!) }}</div>
+                    <div v-if="log.nodeType" class="bold">{{ log.nodeType }}</div>
                     <div>{{ log.message }}</div>
                     <template v-if="log.data">
                         <textarea readonly class="full-width" style="min-height: 7rem; resize: vertical; outline: none;">{{ log.data }}</textarea>
@@ -54,13 +55,14 @@ import { constants } from '@/constants'
 import { useStore } from '@/store'
 import { Workflow } from '@/global';
 import { EditIcon, DeleteIcon } from '@/components/Icons'
+import dayjs from 'dayjs'
 
 const { onDragStart } = useDragAndDrop()
 const store = useStore()
 
 const nodesTypes = ref(constants.NODE_TYPES)
 const selectedTab = ref('workflows')
-const showDebugLogs = ref(true)
+const showDebugLogs = ref(false)
 
 const filteredWorkflowLogs = computed(() => {
     return store.workflowLogs.filter(log => {
@@ -105,5 +107,9 @@ async function deleteWorkflow(workflow: Workflow) {
 async function runWorkflow(workflow: Workflow) {
     store.workflowLogs = []
     await store.runWorkflow(workflow.id)
+}
+
+function formatTimestamp(timestamp: string) {
+    return dayjs(timestamp).format('DD-MMM-YY hh:mm:ss:SSS A')
 }
 </script>
