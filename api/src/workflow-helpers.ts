@@ -187,10 +187,13 @@ async function processNode(node: node, nodes: NodeMap, edges: EdgeMap, outputs: 
     //     debug: true
     // })
 
-    for (const edge of nextEdges) {
-        const nextNode = nodes[edge.target]
-        await processNode(nextNode, nodes, edges, outputs, node)
-    }
+    // Execute tasks in parallel
+    await Promise.all(
+        nextEdges.map((edge) => {
+            const nextNode = nodes[edge.target]
+            return processNode(nextNode, nodes, edges, outputs, node)
+        })
+    )
 }
 
 async function handleHTTPRequestNode(node: HTTPRequestNode) {
