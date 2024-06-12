@@ -4,6 +4,7 @@
             <div @click="selectedTab = 'workflows'" :class="{ active: selectedTab === 'workflows' }">Workflows</div>
             <div @click="selectedTab = 'nodes'" :class="{ active: selectedTab === 'nodes' }">Nodes</div>
             <div @click="selectedTab = 'runs'" :class="{ active: selectedTab === 'runs' }">Runs</div>
+            <div @click="selectedTab = 'log'" :class="{ active: selectedTab === 'log' }">Log</div>
         </div>
         <div v-if="selectedTab === 'workflows'" class="grid" style="grid-template-rows: auto 1fr;">
             <div class="sidebar-item" @click="addNewWorkflow()">+ Add new workflow</div>
@@ -26,7 +27,10 @@
                 <div class="node mt-1 cursor-grab p-1" :draggable="store.activeWorkflow ? true : false" @dragstart="onDragStart($event, nodesType.name as any)" v-for="nodesType in nodesTypes">{{ nodesType.label }}</div>
             </div>
         </div>
-        <div v-if="selectedTab === 'runs'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
+        <div v-if="selectedTab === 'runs'" class="p-2">
+            Workflow run history will be shown here
+        </div>
+        <div v-if="selectedTab === 'log'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
             <div class="mb-1">
                 <label class="cursor-pointer">
                     <input type="checkbox" v-model="showDebugLogs" />

@@ -64,7 +64,7 @@ body {
 
 #frame-content {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 350px;
     overflow: auto;
 }
 
@@ -99,7 +99,7 @@ body {
 }
 
 .tabs > div {
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
     cursor: pointer;
     width: 100%;
     text-align: center;
