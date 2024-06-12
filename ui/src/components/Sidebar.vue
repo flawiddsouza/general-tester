@@ -28,8 +28,7 @@
         </div>
         <div v-if="selectedTab === 'runs'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
             <div class="mb-1">
-                <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow">Run workflow</button>
-                <label class="ml-1 cursor-pointer">
+                <label class="cursor-pointer">
                     <input type="checkbox" v-model="showDebugLogs" />
                     Show debug logs
                 </label>
@@ -103,11 +102,6 @@ async function deleteWorkflow(workflow: Workflow) {
     }
 
     await store.deleteWorkflow(workflow.id)
-}
-
-async function runWorkflow(workflow: Workflow) {
-    store.workflowLogs = []
-    await store.runWorkflow(workflow.id)
 }
 
 function formatTimestamp(timestamp: string) {
