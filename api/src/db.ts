@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/bun-sqlite'
+import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import { Database } from 'bun:sqlite'
 import {
     workflows,
@@ -27,6 +28,17 @@ sqlite.exec('PRAGMA journal_mode = WAL;')
 sqlite.exec('PRAGMA foreign_keys = ON;')
 
 const db = drizzle(sqlite, { schema: { workflows, environments, nodes, edges } })
+
+try {
+    console.log('Running migrations...')
+    migrate(db,{
+        migrationsFolder: './drizzle',
+    })
+    console.log('Migrations complete!')
+} catch (e) {
+    console.error('Error running migrations', e)
+    process.exit(1)
+}
 
 export async function getWorkflows() {
     return await db.select().from(workflows)
