@@ -9,8 +9,12 @@ import {
     node,
     edges,
     edge,
+    workflowRuns,
+    workflowRun,
+    workflowLogs,
+    workflowLog,
 } from './schema'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { mkdir, exists } from 'node:fs/promises'
 import { WorkflowData } from './global'
 
@@ -92,4 +96,30 @@ export async function createEdge(edge: edge) {
 
 export async function deleteEdge(id: edge['id']) {
     return await db.delete(edges).where(eq(edges.id, id))
+}
+
+export async function getWorkflowRuns(workflowId: workflow['id']) {
+    return await db.select().from(workflowRuns).where(eq(workflowRuns.workflowId, workflowId)).orderBy(desc( workflowRuns.createdAt))
+}
+
+export async function createWorkflowRun(run: workflowRun) {
+    return await db.insert(workflowRuns).values(run)
+}
+
+export async function updateWorkflowRun(id: workflowRun['id'], update: Partial<workflowRun>) {
+    return await db.update(workflowRuns).set(update)
+       .where(eq(workflowRuns.id, id))
+}
+
+export async function deleteWorkflowRun(id: workflowRun['id']) {
+    await db.delete(workflowLogs).where(eq(workflowLogs.workflowRunId, id))
+    return await db.delete(workflowRuns).where(eq(workflowRuns.id, id))
+}
+
+export async function getWorkflowRunLogs(workflowRunId: workflowRun['id']) {
+    return await db.select().from(workflowLogs).where(eq(workflowLogs.workflowRunId, workflowRunId))
+}
+
+export async function createWorkflowLog(log: workflowLog) {
+    return await db.insert(workflowLogs).values(log)
 }

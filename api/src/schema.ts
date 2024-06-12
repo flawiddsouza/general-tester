@@ -53,3 +53,28 @@ export const edges = sqliteTable('edges', {
 
 export const edge = createInsertSchema(edges)
 export type edge = Static<typeof edge>
+
+export const workflowRuns = sqliteTable('workflowRuns', {
+    id: text('id').primaryKey(),
+    workflowId: text('workflowId').references(() => workflows.id, { onDelete: 'restrict' }).notNull(),
+    environmentId: text('environmentId').references(() => environments.id, { onDelete: 'restrict' }),
+    status: integer('status').notNull(),
+    createdAt: text('createdAt').default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text('updatedAt').default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => sql`CURRENT_TIMESTAMP`)
+})
+
+export const workflowRun = createInsertSchema(workflowRuns)
+export type workflowRun = Static<typeof workflowRun>
+
+export const workflowLogs = sqliteTable('workflowLogs', {
+    workflowRunId: text('workflowRunId').references(() => workflowRuns.id, { onDelete: 'restrict' }).notNull(),
+    nodeId: text('nodeId').references(() => nodes.id, { onDelete: 'restrict' }),
+    nodeType: text('nodeType'),
+    message: text('message').notNull(),
+    data: text('data', { mode: 'json' }),
+    debug: integer('debug', { mode: 'boolean' }).notNull(),
+    timestamp: text('timestamp'),
+})
+
+export const workflowLog = createInsertSchema(workflowLogs)
+export type workflowLog = Static<typeof workflowLog>

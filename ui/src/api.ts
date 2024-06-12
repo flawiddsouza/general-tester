@@ -1,6 +1,7 @@
 import { treaty } from '@elysiajs/eden'
 import type { App } from '../../api/src/index'
-import { Workflow, WorkflowData, Environment, Node, Edge } from './global'
+import { Workflow, WorkflowData, Environment, Node, Edge, WorkflowRunData } from './global'
+import { workflowRun } from '../../api/src/schema'
 
 const client = treaty<App>('localhost:9002')
 
@@ -71,7 +72,22 @@ export async function deleteEdge(id: string): Promise<void> {
     console.log(data)
 }
 
-export async function runWorkflow(id: string): Promise<void> {
+export async function runWorkflow(id: string): Promise<workflowRun> {
     const { data } = await client.api.workflow({ id }).run.post()
+    return data as workflowRun
+}
+
+export async function getWorkflowRuns(id: string): Promise<workflowRun[]> {
+    const { data } = await client.api.workflow({ id }).runs.get()
+    return data as workflowRun[]
+}
+
+export async function deleteWorkflowRun(id: string): Promise<void> {
+    const { data } = await client.api['workflow-run']({ id }).delete()
     console.log(data)
+}
+
+export async function getWorkflowRunData(id: string): Promise<WorkflowRunData> {
+    const { data } = await client.api['workflow-run']({ id }).get()
+    return data as WorkflowRunData
 }

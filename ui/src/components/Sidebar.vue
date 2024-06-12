@@ -28,7 +28,15 @@
             </div>
         </div>
         <div v-if="selectedTab === 'runs'" class="p-2">
-            Workflow run history will be shown here
+            <div class="pb-4">
+                <div class="sidebar-item grid" style="grid-template-columns: 1fr auto auto;" :class="{ active: store.activeWorkflowRun?.id === workflowRun.id }" v-for="workflowRun in store.workflowRuns" @click="store.activeWorkflowRun = workflowRun">
+                    <div>{{ formatTimestamp(workflowRun.createdAt + 'Z') }}</div>
+                    <div class="grid">
+                        <DeleteIcon @click.stop="deleteWorkflowRun(workflowRun.id)" />
+                    </div>
+                </div>
+                <div v-if="store.workflowRuns.length === 0">No runs found</div>
+            </div>
         </div>
         <div v-if="selectedTab === 'log'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
             <div class="mb-1">
@@ -121,5 +129,13 @@ function moveToNode(nodeId: string) {
         duration: 1000,
         maxZoom: 1.4,
     })
+}
+
+async function deleteWorkflowRun(workflowRunId: workflowRun['id']) {
+    if (!window.confirm('Are you sure you want to delete this workflow run?')) {
+        return
+    }
+
+    await store.deleteWorkflowRun(workflowRunId)
 }
 </script>

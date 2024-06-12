@@ -3,6 +3,7 @@ import { Workflow, Environment, Node, Edge, WorkflowLog } from '@/global'
 import { nanoid } from 'nanoid'
 import * as api from '@/api'
 import { Ref } from 'vue'
+import { workflowRun } from '../../api/src/schema'
 
 interface State {
     webSocket: WebSocket | null
@@ -12,7 +13,9 @@ interface State {
     selectedEnvironment: Environment | null
     nodes: Node[]
     edges: Edge[]
-    workflowLogs: WorkflowLog []
+    workflowRuns: workflowRun[]
+    activeWorkflowRun: workflowRun | null
+    workflowLogs: WorkflowLog[]
     vueFlowRef: Ref<any> | null
 }
 
@@ -26,6 +29,8 @@ export const useStore = defineStore('store', {
             selectedEnvironment: null,
             nodes: [],
             edges: [],
+            workflowRuns: [],
+            activeWorkflowRun: null,
             workflowLogs: [],
             vueFlowRef: null,
         }
@@ -100,12 +105,48 @@ export const useStore = defineStore('store', {
             this.selectedEnvironment = this.environments.find(environment => environment.id === this.activeWorkflow?.currentEnvironmentId) ?? null
             this.nodes = workflowData.nodes
             this.edges = workflowData.edges
+
+            this.workflowLogs = []
+            this.activeWorkflowRun = null
+            this.fetchWorkflowRuns()
         },
         async runWorkflow(workflowId: Workflow['id']) {
-            await api.runWorkflow(workflowId)
+            const workflowRun = await api.runWorkflow(workflowId)
+            this.fetchWorkflowRuns()
+            this.activeWorkflowRun = workflowRun
         },
         addWorkflowLog(data: string) {
-            this.workflowLogs.push(JSON.parse(data))
+            const parsedData: WorkflowLog = JSON.parse(data)
+            if(this.activeWorkflowRun?.id !== parsedData.workflowRunId) {
+                return
+            }
+            this.workflowLogs.push(parsedData)
+        },
+        async fetchWorkflowRuns() {
+            if (!this.activeWorkflow) {
+                throw new Error('No active workflow')
+            }
+
+            this.workflowRuns = await api.getWorkflowRuns(this.activeWorkflow.id)
+        },
+        async fetchActiveWorkflowRunData() {
+            if (!this.activeWorkflowRun) {
+                throw new Error('No active workflow run')
+            }
+
+            const workflowRunData = await api.getWorkflowRunData(this.activeWorkflowRun.id)
+
+            this.workflowLogs = workflowRunData.logs
+        },
+        async deleteWorkflowRun(workflowRunId: workflowRun['id']) {
+            await api.deleteWorkflowRun(workflowRunId)
+
+            if (this.activeWorkflowRun?.id === workflowRunId) {
+                this.activeWorkflowRun = null
+                this.workflowLogs = []
+            }
+
+            this.fetchWorkflowRuns()
         }
     },
 })

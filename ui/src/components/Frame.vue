@@ -17,7 +17,7 @@ import Sidebar from './Sidebar.vue'
 import { storeToRefs } from 'pinia'
 
 const store = useStore()
-const { activeWorkflow } = storeToRefs(store)
+const { activeWorkflow, activeWorkflowRun } = storeToRefs(store)
 
 const localStorageKey = 'GeneralTester-ActiveWorkflowId'
 
@@ -27,6 +27,12 @@ watch(activeWorkflow, () => {
         store.fetchActiveWorkflow()
     } else {
         localStorage.removeItem(localStorageKey)
+    }
+})
+
+watch(activeWorkflowRun, () => {
+    if(activeWorkflowRun.value) {
+        store.fetchActiveWorkflowRunData()
     }
 })
 

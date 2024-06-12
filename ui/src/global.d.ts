@@ -162,10 +162,14 @@ export interface WorkflowData {
 
 export interface WorkflowLog {
     timestamp?: string,
-    workflowId: string,
+    workflowRunId: string,
     nodeId?: string | null,
     nodeType?: string | null,
     message: string,
     data?: any | null,
     debug: boolean
+}
+
+export interface WorkflowRunData {
+    logs: WorkflowLog[]
 }

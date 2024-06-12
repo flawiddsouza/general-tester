@@ -45,4 +45,10 @@ export const constants = {
             label: 'If Condition'
         },
     ],
+    STATUS: {
+        RUNNING: 1,
+        COMPLETED: 2,
+        FAILED: 3,
+        CANCELLED: 4,
+    },
 }

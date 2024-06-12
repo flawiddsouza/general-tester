@@ -15,7 +15,10 @@ import {
     updateNode,
     deleteNode,
     createEdge,
-    deleteEdge
+    deleteEdge,
+    getWorkflowRuns,
+    deleteWorkflowRun,
+    getWorkflowRunLogs,
 } from './db'
 import { runWorkflow } from './workflow-helpers'
 import { staticPlugin } from '@elysiajs/static'
@@ -82,9 +85,20 @@ const api = new Elysia({ prefix: '/api' })
     .post('/workflow/:id/run', async({ params }) => {
         const data = await getWorkflow(params.id)
 
-        runWorkflow(data)
+        return await runWorkflow(data)
+    })
+    .get('/workflow/:id/runs', async({ params }) => {
+        return getWorkflowRuns(params.id)
+    })
+    .get('/workflow-run/:id', async({ params }) => {
+        const logs = await getWorkflowRunLogs(params.id)
 
-        return { message: `Running workflow: ${data.workflow.name}` }
+        return {
+            logs,
+        }
+    })
+    .delete('/workflow-run/:id', async({ params }) => {
+        return deleteWorkflowRun(params.id)
     })
 
 const app = new Elysia()
