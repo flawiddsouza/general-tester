@@ -8,6 +8,7 @@
         @dragover="(onDragOver as any)"
         @dragleave="onDragLeave"
         @drop="(onDrop as any)"
+        :ref="ref => store.vueFlowRef = ref"
     >
         <Background :gap="15" :style="{ backgroundColor: isDragOver ? '#e7f3ff' : 'transparent' }" />
 

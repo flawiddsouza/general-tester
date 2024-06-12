@@ -37,7 +37,7 @@
             <div style="user-select: text;">
                 <div v-for="(log, logIndex) in filteredWorkflowLogs" :class="{ 'mt-1': logIndex > 0 }" :style="{ 'backgroundColor': log.debug ? '#c8cfff' : '', padding: log.debug ? '0.5rem' : '' }">
                     <div style="font-size: 0.7rem; color: #797979;">{{ formatTimestamp(log.timestamp!) }}</div>
-                    <div v-if="log.nodeType" class="bold">{{ log.nodeType }}</div>
+                    <div v-if="log.nodeType" class="bold cursor-pointer" @click="moveToNode(log.nodeId)">{{ log.nodeType }}</div>
                     <div>{{ log.message }}</div>
                     <template v-if="log.data">
                         <textarea readonly class="full-width" style="min-height: 7rem; resize: vertical; outline: none;">{{ log.data }}</textarea>
@@ -56,6 +56,7 @@ import { useStore } from '@/store'
 import { Workflow } from '@/global';
 import { EditIcon, DeleteIcon } from '@/components/Icons'
 import dayjs from 'dayjs'
+import { useVueFlow } from '@vue-flow/core'
 
 const { onDragStart } = useDragAndDrop()
 const store = useStore()
@@ -111,5 +112,16 @@ async function runWorkflow(workflow: Workflow) {
 
 function formatTimestamp(timestamp: string) {
     return dayjs(timestamp).format('DD-MMM-YY hh:mm:ss:SSS A')
+}
+
+function moveToNode(nodeId: string) {
+    const vueFlow = useVueFlow({
+        id: store.vueFlowRef.id,
+    })
+    vueFlow.fitView({
+        nodes: [nodeId],
+        duration: 1000,
+        maxZoom: 1.4,
+    })
 }
 </script>

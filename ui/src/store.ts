@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { Workflow, Environment, Node, Edge, WorkflowLog } from '@/global'
 import { nanoid } from 'nanoid'
 import * as api from '@/api'
+import { Ref } from 'vue'
 
 interface State {
     webSocket: WebSocket | null
@@ -12,6 +13,7 @@ interface State {
     nodes: Node[]
     edges: Edge[]
     workflowLogs: WorkflowLog []
+    vueFlowRef: Ref<any> | null
 }
 
 export const useStore = defineStore('store', {
@@ -25,6 +27,7 @@ export const useStore = defineStore('store', {
             nodes: [],
             edges: [],
             workflowLogs: [],
+            vueFlowRef: null,
         }
     },
     actions: {
