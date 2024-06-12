@@ -14,7 +14,6 @@
 <script setup lang="ts">
 import { WebSocketEmitterNode } from '@/global'
 import Base from './Base.vue'
-import TextInput from '@/components/TextInput.vue'
 
 defineProps<{ node: WebSocketEmitterNode }>()
 </script>

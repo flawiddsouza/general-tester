@@ -19,7 +19,6 @@
 <script setup lang="ts">
 import { WebSocketListenerNode } from '@/global'
 import Base from './Base.vue'
-import TextInput from '@/components/TextInput.vue'
 
 defineProps<{ node: WebSocketListenerNode }>()
 </script>

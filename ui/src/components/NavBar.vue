@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { useStore } from '@/store'
+import { Workflow } from '@/global'
 
 const store = useStore()
 
