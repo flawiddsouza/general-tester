@@ -36,7 +36,7 @@ watch(activeWorkflowRun, () => {
     }
 })
 
-onBeforeMount(() => {
+function initializeWebSocket() {
     store.webSocket = new WebSocket('ws://localhost:9002/ws')
 
     store.webSocket.addEventListener('open', () => {
@@ -49,7 +49,15 @@ onBeforeMount(() => {
 
     store.webSocket.addEventListener('close', () => {
         console.log('Disconnected from server')
+        setTimeout(() => {
+            console.log('Reconnecting...')
+            initializeWebSocket()
+        }, 5000)
     })
+}
+
+onBeforeMount(() => {
+    initializeWebSocket()
 
     const savedActiveWorkflowId = localStorage.getItem(localStorageKey)
     if(savedActiveWorkflowId) {
