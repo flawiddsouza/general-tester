@@ -97,6 +97,24 @@ export async function runWorkflow(workflowData: WorkflowData) {
     return newWorkflowRun
 }
 
+async function markWorkflowAsFailed(workflowRunId: workflowRun['id']) {
+    await updateWorkflowRun(workflowRunId, {
+        status: STATUS.FAILED
+    })
+
+    logWorkflowMessage({
+        workflowRunId,
+        message: 'Workflow run failed',
+        debug: false,
+    })
+}
+
+async function markWorkflowAsCompleted(workflowRunId: workflowRun['id']) {
+    await updateWorkflowRun(workflowRunId, {
+        status: STATUS.COMPLETED
+    })
+}
+
 async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null = null) {
     let message = 'Processing node'
 
@@ -131,9 +149,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
             input = previousNode ? outputs[previousNode.id] : {}
             outputs[node.id] = await handleSocketIONode(workflowRunId, node as SocketIONode, input)
             if(outputs[node.id] === false) {
-                await updateWorkflowRun(workflowRunId, {
-                    status: STATUS.FAILED
-                })
+                await markWorkflowAsFailed(workflowRunId)
                 return
             }
             break
@@ -148,7 +164,11 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
         case 'WebSocket':
             input = previousNode ? outputs[previousNode.id] : {}
-            handleWebSocketNode(workflowRunId, node as WebSocketNode, input)
+            outputs[node.id] = await handleWebSocketNode(workflowRunId, node as WebSocketNode, input)
+            if(outputs[node.id] === false) {
+                await markWorkflowAsFailed(workflowRunId)
+                return
+            }
             break
 
         case 'WebSocketListener':
@@ -182,9 +202,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
             return
 
         case 'End':
-            await updateWorkflowRun(workflowRunId, {
-                status: STATUS.COMPLETED
-            })
+            await markWorkflowAsCompleted(workflowRunId)
             return
 
         default:
@@ -504,7 +522,7 @@ function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): st
     return webSocketNodeId
 }
 
-function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNode, _input: any) {
+async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNode, _input: any) {
     let socketConnection
 
     try {
@@ -525,13 +543,54 @@ function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNo
 
     webSocketConnections[node.id] = socketConnection
 
-    socketConnection.addEventListener('open', () => {
-        logWorkflowMessage({
-            workflowRunId,
-            nodeId: node.id,
-            nodeType: node.type,
-            message: 'Connected',
-            debug: false
+    let openEventReceived = false
+
+    const connectionTimeoutMS = 5 * 1000
+    let timeoutId: Timer
+
+    const connectionPromise = new Promise<boolean>((resolve) => {
+        timeoutId = setTimeout(() => {
+            logWorkflowMessage({
+                workflowRunId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Connection timeout',
+                debug: false
+            })
+            socketConnection!.close()
+            resolve(false)
+        }, connectionTimeoutMS)
+
+        socketConnection.addEventListener('open', () => {
+            clearTimeout(timeoutId)
+
+            logWorkflowMessage({
+                workflowRunId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Connected',
+                debug: false
+            })
+
+            openEventReceived = true
+
+            resolve(true)
+        })
+
+        socketConnection.addEventListener('close', () => {
+            clearTimeout(timeoutId)
+
+            logWorkflowMessage({
+                workflowRunId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Disconnected',
+                debug: false
+            })
+
+            if (!openEventReceived) {
+                resolve(false)
+            }
         })
     })
 
@@ -547,16 +606,6 @@ function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNo
         })
     })
 
-    socketConnection.addEventListener('close', () => {
-        logWorkflowMessage({
-            workflowRunId,
-            nodeId: node.id,
-            nodeType: node.type,
-            message: 'Disconnected',
-            debug: false
-        })
-    })
-
     socketConnection.addEventListener('error', (event) => {
         logWorkflowMessage({
             workflowRunId,
@@ -567,6 +616,8 @@ function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNo
             debug: true
         })
     })
+
+    return connectionPromise
 }
 
 async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], node: WebSocketListenerNode, nodes: NodeMap, edges: EdgeMap) {
