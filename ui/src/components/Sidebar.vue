@@ -27,7 +27,7 @@
                 <div class="node mt-1 cursor-grab p-1" :draggable="store.activeWorkflow ? true : false" @dragstart="onDragStart($event, nodesType.name as any)" v-for="nodesType in nodesTypes">{{ nodesType.label }}</div>
             </div>
         </div>
-        <div v-if="selectedTab === 'runs'" class="p-2">
+        <div v-if="selectedTab === 'runs'">
             <div class="pb-4">
                 <div class="sidebar-item grid" style="grid-template-columns: 1fr auto auto;" :class="{ active: store.activeWorkflowRun?.id === workflowRun.id }" v-for="workflowRun in store.workflowRuns" @click="store.activeWorkflowRun = workflowRun">
                     <div>{{ formatTimestamp(workflowRun.createdAt + 'Z') }}</div>
@@ -35,7 +35,7 @@
                         <DeleteIcon @click.stop="deleteWorkflowRun(workflowRun.id)" />
                     </div>
                 </div>
-                <div v-if="store.workflowRuns.length === 0">No runs found</div>
+                <div class="p-2" v-if="store.workflowRuns.length === 0">No runs found</div>
             </div>
         </div>
         <div v-if="selectedTab === 'log'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
