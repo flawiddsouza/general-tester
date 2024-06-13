@@ -129,7 +129,13 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
         case 'SocketIO':
             input = previousNode ? outputs[previousNode.id] : {}
-            handleSocketIONode(workflowRunId, node as SocketIONode, input)
+            outputs[node.id] = await handleSocketIONode(workflowRunId, node as SocketIONode, input)
+            if(outputs[node.id] === false) {
+                await updateWorkflowRun(workflowRunId, {
+                    status: STATUS.FAILED
+                })
+                return
+            }
             break
 
         case 'SocketIOListener':
@@ -283,7 +289,7 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
     return socketIONodeId
 }
 
-function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode, _input: any) {
+async function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode, _input: any) {
     let socketConnection
 
     try {
@@ -322,13 +328,34 @@ function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode
 
     socketIoConnections[node.id] = socketConnection
 
-    socketConnection.on('connect', () => {
-        logWorkflowMessage({
-            workflowRunId,
-            nodeId: node.id,
-            nodeType: node.type,
-            message: `Connected: ${node.data.url}`,
-            debug: true
+    const connectionTimeoutMS = 5 * 1000
+    let timeoutId
+
+    const connectionPromise = new Promise<boolean>((resolve) => {
+        timeoutId = setTimeout(() => {
+            logWorkflowMessage({
+                workflowRunId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Connection timeout',
+                debug: false
+            })
+            socketConnection!.disconnect()
+            resolve(false)
+        }, connectionTimeoutMS)
+
+        socketConnection!.on('connect', () => {
+            clearTimeout(timeoutId!)
+
+            logWorkflowMessage({
+                workflowRunId,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Connected',
+                debug: false
+            })
+
+            resolve(true)
         })
     })
 
@@ -337,8 +364,8 @@ function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode
             workflowRunId,
             nodeId: node.id,
             nodeType: node.type,
-            message: `Disconnected: ${node.data.url}`,
-            debug: true
+            message: 'Disconnected',
+            debug: false
         })
     })
 
@@ -374,6 +401,8 @@ function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode
             })
         })
     }
+
+    return connectionPromise
 }
 
 async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], node: SocketIOListenerNode, nodes: NodeMap, edges: EdgeMap) {
@@ -502,7 +531,7 @@ function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNo
             nodeId: node.id,
             nodeType: node.type,
             message: 'Connected',
-            debug: true
+            debug: false
         })
     })
 
@@ -524,7 +553,7 @@ function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNo
             nodeId: node.id,
             nodeType: node.type,
             message: 'Disconnected',
-            debug: true
+            debug: false
         })
     })
 
