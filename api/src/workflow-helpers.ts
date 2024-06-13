@@ -232,7 +232,20 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], node: HTT
         body: node.data.method !== 'GET' ? JSON.stringify(node.data.body) : null
     })
 
-    const responseData = await response.json()
+    let responseData = await response.text()
+
+    try {
+        responseData = JSON.parse(responseData)
+    } catch (e) {
+        logWorkflowMessage({
+            workflowRunId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Failed to parse response to JSON',
+            data: responseData,
+            debug: true
+        })
+    }
 
     logWorkflowMessage({
         workflowRunId,
