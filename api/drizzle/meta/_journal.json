@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1717447067880,
+      "when": 1718355753533,
       "tag": "0000_init_db",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1718184891670,
-      "tag": "0001_workflow_runs",
       "breakpoints": true
     }
   ]

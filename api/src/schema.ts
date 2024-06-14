@@ -57,7 +57,7 @@ export type edge = Static<typeof edge>
 export const workflowRuns = sqliteTable('workflowRuns', {
     id: text('id').primaryKey(),
     workflowId: text('workflowId').references(() => workflows.id, { onDelete: 'restrict' }).notNull(),
-    environmentId: text('environmentId').references(() => environments.id, { onDelete: 'restrict' }),
+    environmentId: text('environmentId'),
     status: integer('status').notNull(),
     createdAt: text('createdAt').default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text('updatedAt').default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => sql`CURRENT_TIMESTAMP`)
@@ -68,7 +68,7 @@ export type workflowRun = Static<typeof workflowRun>
 
 export const workflowLogs = sqliteTable('workflowLogs', {
     workflowRunId: text('workflowRunId').references(() => workflowRuns.id, { onDelete: 'restrict' }).notNull(),
-    nodeId: text('nodeId').references(() => nodes.id, { onDelete: 'restrict' }),
+    nodeId: text('nodeId'),
     nodeType: text('nodeType'),
     message: text('message').notNull(),
     data: text('data', { mode: 'json' }),
