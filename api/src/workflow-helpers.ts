@@ -115,6 +115,54 @@ async function markWorkflowAsCompleted(workflowRunId: workflowRun['id']) {
     })
 }
 
+const variableMatchingRegex = /{{(.*?)}}/g
+
+function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nodeType: node['type'], input: any, data: any) {
+    const nodeDataProperties = Object.keys(data)
+
+    const parsedData: any = {}
+
+    const context = {
+        $input: input
+    }
+
+    const sandbox = vm.createContext(context)
+
+
+    for (const key of nodeDataProperties) {
+
+        const isObject = typeof data[key] !== 'string'
+        let jsonData: string = isObject ? JSON.stringify(data[key]) : data[key]
+
+        let match
+        while ((match = variableMatchingRegex.exec(jsonData))) {
+            const outerMatch = match[0]
+            const expressionOrVariable = match[1].trim()
+
+            const script = new vm.Script(expressionOrVariable)
+
+            try {
+                const result = script.runInContext(sandbox)
+                jsonData = jsonData.replaceAll(outerMatch, result)
+            } catch(e: any) {
+                logWorkflowMessage({
+                    workflowRunId,
+                    nodeId,
+                    nodeType,
+                    message: 'Error',
+                    data: e.message,
+                    debug: true
+                })
+                parsedData[key] = data[key]
+            }
+        }
+
+        parsedData[key] = isObject ? JSON.parse(jsonData) : jsonData
+    }
+
+    return parsedData
+}
+
 async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null = null) {
     let message = 'Processing node'
 
@@ -126,16 +174,19 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         message = 'Ending workflow run'
     }
 
+    const input = previousNode ? outputs[previousNode.id] : {}
+    const parsedNodeData = parseNodeData(workflowRunId, node.id, node.type, input, node.data)
+
     logWorkflowMessage({
         workflowRunId,
         nodeId: node.id,
         nodeType: node.type,
         message,
-        data: Object.keys(node.data as []).length === 0 ? null : node.data,
+        data: Object.keys(parsedNodeData as []).length === 0 ? null : parsedNodeData,
         debug: false,
     })
 
-    let input: any
+    node.data = parsedNodeData
 
     switch (node.type) {
         case 'Start':
@@ -146,8 +197,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
             break
 
         case 'SocketIO':
-            input = previousNode ? outputs[previousNode.id] : {}
-            outputs[node.id] = await handleSocketIONode(workflowRunId, node as SocketIONode, input)
+            outputs[node.id] = await handleSocketIONode(workflowRunId, node as SocketIONode)
             if(outputs[node.id] === false) {
                 await markWorkflowAsFailed(workflowRunId)
                 return
@@ -163,8 +213,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
             break
 
         case 'WebSocket':
-            input = previousNode ? outputs[previousNode.id] : {}
-            outputs[node.id] = await handleWebSocketNode(workflowRunId, node as WebSocketNode, input)
+            outputs[node.id] = await handleWebSocketNode(workflowRunId, node as WebSocketNode)
             if(outputs[node.id] === false) {
                 await markWorkflowAsFailed(workflowRunId)
                 return
@@ -180,8 +229,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
             break
 
         case 'IfCondition':
-            input = previousNode ? outputs[previousNode.id] : {}
-            const conditionResult = handleIfConditionNode(workflowRunId, node as IfConditionNode, input)
+            const conditionResult = handleIfConditionNode(workflowRunId, node as IfConditionNode)
             outputs[node.id] = conditionResult
 
             const ifEdges = edges[node.id] || []
@@ -307,7 +355,7 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
     return socketIONodeId
 }
 
-async function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode, _input: any) {
+async function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode) {
     let socketConnection
 
     try {
@@ -522,7 +570,7 @@ function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): st
     return webSocketNodeId
 }
 
-async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNode, _input: any) {
+async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNode) {
     let socketConnection
 
     try {
@@ -695,48 +743,21 @@ function handleWebSocketEmitterNode(workflowRunId: workflowRun['id'], node: WebS
     socket.send(node.data.eventBody)
 }
 
-function handleIfConditionNode(workflowRunId: workflowRun['id'], node: IfConditionNode, input: any) {
-    const context = {
-        $input: input
-    }
-
-    const scriptLeft = new vm.Script(node.data.leftOperand)
-    const scriptRight = new vm.Script(node.data.rightOperand)
-
-    const sandbox = vm.createContext(context)
-
-    let leftValue
-    let rightValue
-
-    try {
-        leftValue = scriptLeft.runInContext(sandbox)
-        rightValue = scriptRight.runInContext(sandbox)
-    } catch(e: any) {
-        logWorkflowMessage({
-            workflowRunId,
-            nodeId: node.id,
-            nodeType: node.type,
-            message: 'Error',
-            data: e.message,
-            debug: true
-        })
-        return
-    }
-
+function handleIfConditionNode(workflowRunId: workflowRun['id'], node: IfConditionNode) {
     let conditionMet = false
 
     switch (node.data.operator) {
         case '==':
-            conditionMet = leftValue == rightValue;
+            conditionMet = node.data.leftOperand == node.data.rightOperand
             break
         case '==':
-            conditionMet = leftValue === rightValue
+            conditionMet = node.data.leftOperand === node.data.rightOperand
             break
         case '!=':
-            conditionMet = leftValue != rightValue
+            conditionMet = node.data.leftOperand != node.data.rightOperand
             break
         case '!=':
-            conditionMet = leftValue !== rightValue
+            conditionMet = node.data.leftOperand !== node.data.rightOperand
             break
         default:
             logWorkflowMessage({
