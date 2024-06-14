@@ -295,9 +295,31 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 }
 
 async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], node: HTTPRequestNode) {
-    const response = await fetch(node.data.url, {
+    let parsedUrl: URL
+
+    try {
+        parsedUrl = new URL(node.data.url)
+    } catch (error) {
+        logWorkflowMessage({
+            workflowRunId,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Invalid URL',
+            data: node.data.url,
+            debug: false
+        })
+        return
+    }
+
+    node.data.queryParams.forEach(queryParam => {
+        if (!queryParam.disabled) {
+            parsedUrl.searchParams.append(queryParam.name, queryParam.value)
+        }
+    })
+
+    const response = await fetch(parsedUrl, {
         method: node.data.method,
-        headers: node.data.headers.reduce((acc: { [key: string]: string }, header) => {
+        headers: node.data.headers.filter(header => !header.disabled).reduce((acc: { [key: string]: string }, header) => {
             acc[header.name] = header.value
             return acc
         }, {}),
@@ -367,7 +389,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
             nodeType: node.type,
             message: 'Invalid URL',
             data: node.data.url,
-            debug: true
+            debug: false
         })
         return
     }
@@ -582,7 +604,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
             nodeType: node.type,
             message: 'Invalid URL',
             data: node.data.url,
-            debug: true
+            debug: false
         })
         return
     }
