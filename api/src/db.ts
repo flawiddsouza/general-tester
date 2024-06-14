@@ -15,7 +15,7 @@ import {
     workflowLogs,
     workflowLog,
 } from './schema'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { mkdir, exists } from 'node:fs/promises'
 import { WorkflowData } from './global'
 
@@ -71,6 +71,10 @@ export async function deleteWorkflow(id: workflow['id']) {
     await db.delete(environments).where(eq(environments.workflowId, id))
     await db.delete(edges).where(eq(edges.workflowId, id))
     await db.delete(nodes).where(eq(nodes.workflowId, id))
+    const workflowRunsData = await db.select(workflowRun.id).from(workflowRuns).where(eq(workflowRuns.workflowId, id))
+    const workflowRunIds = workflowRunsData.map((run) => run.id)
+    await db.delete(workflowLogs).where(inArray(workflowLogs.workflowRunId, workflowRunIds))
+    await db.delete(workflowRuns).where(eq(workflowRuns.workflowId, id))
     return await db.delete(workflows).where(eq(workflows.id, id))
 }
 
