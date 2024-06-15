@@ -93,8 +93,10 @@ export async function runWorkflow(workflowData: WorkflowData) {
         return
     }
 
+    const workflowEnvironment = workflowData.environments.find(environment => environment.id === workflowData.workflow.currentEnvironmentId)
+
     // Start processing the workflow
-    processNode(workflowRunId, startNode, nodes, edges, outputs, null, [])
+    processNode(workflowRunId, startNode, nodes, edges, outputs, null, [], workflowEnvironment ? workflowEnvironment.env : {})
 
     return newWorkflowRun
 }
@@ -119,7 +121,7 @@ async function markWorkflowAsCompleted(workflowRunId: workflowRun['id']) {
 
 const variableMatchingRegex = /{{(.*?)}}/g
 
-function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nodeType: node['type'], input: any, data: any, variables: any) {
+function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nodeType: node['type'], input: any, data: any, variables: any, environment: any) {
     const nodeDataProperties = Object.keys(data)
 
     const parsedData: any = {}
@@ -127,6 +129,7 @@ function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nod
     const context = {
         $input: input,
         $vars: variables,
+        $env: environment,
     }
 
     const sandbox = vm.createContext(context)
@@ -165,7 +168,7 @@ function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nod
     return parsedData
 }
 
-async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null, variables: Param[]) {
+async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null, variables: Param[], environment: any) {
     let message = 'Processing node'
 
     if (node.type === 'Start') {
@@ -181,14 +184,29 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         acc[variable.name] = variable.value
         return acc
     }, {} as any)
-    const parsedNodeData = parseNodeData(workflowRunId, node.id, node.type, input, node.data, variablesConverted)
+    const parsedNodeData = parseNodeData(workflowRunId, node.id, node.type, input, node.data, variablesConverted, environment)
+
+    let logData: any
+
+    if (Object.keys(parsedNodeData as []).length === 0) {
+        logData = null
+    } else {
+        if (Object.keys(variablesConverted).length === 0) {
+            logData = parsedNodeData
+        } else {
+            logData = {
+                $vars: variablesConverted,
+                parsedNodeData
+            }
+        }
+    }
 
     logWorkflowMessage({
         workflowRunId,
         nodeId: node.id,
         nodeType: node.type,
         message,
-        data: Object.keys(parsedNodeData as []).length === 0 ? null : { $vars: variablesConverted, parsedNodeData },
+        data: logData,
         debug: false,
     })
 
@@ -243,7 +261,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
             if (nextEdge) {
                 const nextNode = nodes[nextEdge.target]
-                await processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables)
+                await processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables, environment)
             } else {
                 logWorkflowMessage({
                     workflowRunId,
@@ -296,21 +314,21 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         if(startNode.data.parallelEntries && startNode.data.parallelEntries.length > 0) {
             await Promise.all(
                 startNode.data.parallelEntries.map(entry => {
-                    return executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, entry.variables)
+                    return executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, entry.variables, environment)
                 })
             )
             return
         }
     }
 
-    await executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, variables)
+    await executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, variables, environment)
 }
 
-async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflowRun['id'], nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, node: node, variables: Param[]) {
+async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflowRun['id'], nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, node: node, variables: Param[], environment: any) {
     return Promise.all(
         nextEdges.map((edge) => {
             const nextNode = structuredClone(nodes[edge.target])
-            return processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables)
+            return processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables, environment)
         })
     )
 }

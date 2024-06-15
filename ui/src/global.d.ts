@@ -1,3 +1,11 @@
+declare global {
+    interface Window {
+        createPrompt: any
+        createConfirm: any
+        createAlert: any
+    }
+}
+
 export interface BaseNode {
     id: string
     workflowId: string
@@ -147,8 +155,8 @@ export interface Environment {
     workflowId: string
     name: string
     env: { [key: string]: string }
-    createdAt: string
-    updatedAt: string
+    createdAt?: string
+    updatedAt?: string
 }
 
 export interface Workflow {

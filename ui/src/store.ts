@@ -147,7 +147,62 @@ export const useStore = defineStore('store', {
             }
 
             this.fetchWorkflowRuns()
-        }
+        },
+        async createEnvironment(environment: Environment) {
+            if (!this.activeWorkflow) {
+                throw new Error('No active workflow')
+            }
+
+            await api.createEnvironment({
+                id: environment.id,
+                name: environment.name,
+                workflowId: this.activeWorkflow.id,
+                env: {},
+            })
+
+            await this.changeEnvironment(environment.id)
+        },
+        async changeEnvironment(environmentId: Environment['id']) {
+            if (!this.activeWorkflow) {
+                throw new Error('No active workflow')
+            }
+
+            await this.updateWorkflow(this.activeWorkflow.id, { currentEnvironmentId: environmentId })
+            this.activeWorkflow.currentEnvironmentId = environmentId
+
+            await this.fetchActiveWorkflow()
+        },
+        async renameEnvironment(environmentId: Environment['id'], name: Environment['name']) {
+            await api.updateEnvironment(environmentId, { name })
+
+            const environment = this.environments.find(environment => environment.id === environmentId)
+            if (environment) {
+                environment.name = name
+            }
+        },
+        async updateEnvironment(environmentId: Environment['id'], env: Environment['env']) {
+            await api.updateEnvironment(environmentId, { env })
+        },
+        async deleteEnvironment(environmentId: Environment['id']) {
+            if (!this.activeWorkflow) {
+                throw new Error('No active workflow')
+            }
+
+            await api.deleteEnvironment(environmentId)
+
+            if (this.selectedEnvironment?.id === environmentId) {
+                const changeEnvironment = this.environments.find(environment => environment.id !== environmentId)
+                if (changeEnvironment) {
+                    await this.updateWorkflow(this.activeWorkflow.id, { currentEnvironmentId: changeEnvironment.id })
+                    this.activeWorkflow.currentEnvironmentId = changeEnvironment.id
+                } else {
+                    await this.updateWorkflow(this.activeWorkflow.id, { currentEnvironmentId: null })
+                    this.activeWorkflow.currentEnvironmentId = null
+                }
+            }
+
+            await this.fetchActiveWorkflow()
+        },
     },
 })
 

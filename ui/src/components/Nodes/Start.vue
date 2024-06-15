@@ -29,8 +29,8 @@
                 </tbody>
             </table>
             <div class="mt-1">
-                <button @click="addVariable" class="nodrag">Add Variable</button>
-                <button @click="addEntry" class="ml-1 nodrag">Add Parallel Entry</button>
+                <button @click="addVariable" class="button nodrag">Add Variable</button>
+                <button @click="addEntry" class="button ml-1 nodrag">Add Parallel Entry</button>
             </div>
         </div>
     </Base>

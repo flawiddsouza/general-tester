@@ -11,7 +11,13 @@ export default defineConfig({
         },
     },
     plugins: [
-        vue(),
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) => ['alert-confirm-prompt'].includes(tag)
+                }
+            }
+        }),
         !process.env.VITEST ? checker({ typescript: true }) : undefined,
     ],
     build: {

@@ -12,6 +12,7 @@
     --secondary-background-color: #ecedf9;
     --focus-border-color: #007bff;
     --box-shadow-color-primary: #0000004d;
+    --font-monospace: Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Courier New', monospace, 'Droid Sans Fallback';
 }
 
 html, body, #app, #frame {
@@ -22,6 +23,10 @@ body {
     margin: 0;
     font-size: 100%;
     font-family: sans-serif;
+}
+
+h3 {
+    margin: 0;
 }
 
 /* id & class styles */
@@ -55,6 +60,7 @@ body {
 #navbar {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 0.5rem 1rem;
     background-color: var(--secondary-background-color);
     border-bottom: 1px solid var(--border-color);
@@ -156,6 +162,22 @@ table.no-padding {
     border: 1px solid #ccc;
     padding: 0.5em;
     text-align: center;
+}
+
+.button, input[type="file"]::file-selector-button {
+    --button-background-color: white;
+    --button-text-color: black;
+    --button-border-color: #8c8c8c;
+    background-color: var(--button-background-color);
+    color: var(--button-text-color);
+    border: 1px solid var(--button-border-color);
+    padding: 3px 10px;
+    border-radius: 3px;
+}
+
+.button:hover, input[type="file"]::file-selector-button:hover {
+    --button-hover-background-color: #f8f8f8;
+    background-color: var(--button-hover-background-color);
 }
 
 /* functional */

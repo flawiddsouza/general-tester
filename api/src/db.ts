@@ -18,6 +18,7 @@ import {
 import { desc, eq, inArray } from 'drizzle-orm'
 import { mkdir, exists } from 'node:fs/promises'
 import { WorkflowData } from './global'
+import { nanoid } from 'nanoid'
 
 if (!await exists('./data')) {
     await mkdir('./data')
@@ -59,7 +60,15 @@ export async function getWorkflow(id: workflow['id']): Promise<WorkflowData> {
 }
 
 export async function createWorkflow(workflow: workflow) {
-    return await db.insert(workflows).values(workflow)
+    const environmentId = nanoid()
+    workflow.currentEnvironmentId = environmentId
+    await db.insert(workflows).values(workflow)
+    await db.insert(environments).values({
+        id: environmentId,
+        name: 'Default',
+        workflowId: workflow.id,
+        env: {}
+    })
 }
 
 export async function updateWorkflow(id: workflow['id'], update: Partial<workflow>) {
@@ -73,7 +82,9 @@ export async function deleteWorkflow(id: workflow['id']) {
     await db.delete(nodes).where(eq(nodes.workflowId, id))
     const workflowRunsData = await db.select(workflowRun.id).from(workflowRuns).where(eq(workflowRuns.workflowId, id))
     const workflowRunIds = workflowRunsData.map((run) => run.id)
-    await db.delete(workflowLogs).where(inArray(workflowLogs.workflowRunId, workflowRunIds))
+    if (workflowRunIds.length > 0) {
+        await db.delete(workflowLogs).where(inArray(workflowLogs.workflowRunId, workflowRunIds))
+    }
     await db.delete(workflowRuns).where(eq(workflowRuns.workflowId, id))
     return await db.delete(workflows).where(eq(workflows.id, id))
 }
