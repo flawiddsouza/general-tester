@@ -10,6 +10,8 @@ import type {
     WebSocketNode,
     WebSocketListenerNode,
     WebSocketEmitterNode,
+    StartNode,
+    Param,
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
@@ -92,7 +94,7 @@ export async function runWorkflow(workflowData: WorkflowData) {
     }
 
     // Start processing the workflow
-    processNode(workflowRunId, startNode, nodes, edges, outputs)
+    processNode(workflowRunId, startNode, nodes, edges, outputs, null, [])
 
     return newWorkflowRun
 }
@@ -117,17 +119,17 @@ async function markWorkflowAsCompleted(workflowRunId: workflowRun['id']) {
 
 const variableMatchingRegex = /{{(.*?)}}/g
 
-function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nodeType: node['type'], input: any, data: any) {
+function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nodeType: node['type'], input: any, data: any, variables: any) {
     const nodeDataProperties = Object.keys(data)
 
     const parsedData: any = {}
 
     const context = {
-        $input: input
+        $input: input,
+        $vars: variables,
     }
 
     const sandbox = vm.createContext(context)
-
 
     for (const key of nodeDataProperties) {
 
@@ -163,7 +165,7 @@ function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nod
     return parsedData
 }
 
-async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null = null) {
+async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null, variables: Param[]) {
     let message = 'Processing node'
 
     if (node.type === 'Start') {
@@ -175,14 +177,18 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
     }
 
     const input = previousNode ? outputs[previousNode.id] : {}
-    const parsedNodeData = parseNodeData(workflowRunId, node.id, node.type, input, node.data)
+    const variablesConverted = variables.filter(variable => !variable.disabled).reduce((acc, variable) => {
+        acc[variable.name] = variable.value
+        return acc
+    }, {} as any)
+    const parsedNodeData = parseNodeData(workflowRunId, node.id, node.type, input, node.data, variablesConverted)
 
     logWorkflowMessage({
         workflowRunId,
         nodeId: node.id,
         nodeType: node.type,
         message,
-        data: Object.keys(parsedNodeData as []).length === 0 ? null : parsedNodeData,
+        data: Object.keys(parsedNodeData as []).length === 0 ? null : { $vars: variablesConverted, parsedNodeData },
         debug: false,
     })
 
@@ -237,7 +243,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
             if (nextEdge) {
                 const nextNode = nodes[nextEdge.target]
-                await processNode(workflowRunId, nextNode, nodes, edges, outputs, node)
+                await processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables)
             } else {
                 logWorkflowMessage({
                     workflowRunId,
@@ -285,11 +291,26 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         debug: true
     })
 
-    // Execute tasks in parallel
-    await Promise.all(
+    if(node.type === 'Start') {
+        const startNode = node as StartNode
+        if(startNode.data.parallelEntries && startNode.data.parallelEntries.length > 0) {
+            await Promise.all(
+                startNode.data.parallelEntries.map(entry => {
+                    return executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, entry.variables)
+                })
+            )
+            return
+        }
+    }
+
+    await executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, variables)
+}
+
+async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflowRun['id'], nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, node: node, variables: Param[]) {
+    return Promise.all(
         nextEdges.map((edge) => {
-            const nextNode = nodes[edge.target]
-            return processNode(workflowRunId, nextNode, nodes, edges, outputs, node)
+            const nextNode = structuredClone(nodes[edge.target])
+            return processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables)
         })
     )
 }

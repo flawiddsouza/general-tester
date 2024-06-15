@@ -147,6 +147,17 @@ table.no-padding {
     }
 }
 
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    border: 1px solid #ccc;
+    padding: 0.5em;
+    text-align: center;
+}
+
 /* functional */
 
 .full-width {

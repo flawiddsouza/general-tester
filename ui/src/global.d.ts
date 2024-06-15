@@ -6,9 +6,15 @@ export interface BaseNode {
     updatedAt: string
 }
 
+export interface StartNodeData {
+    parallelEntries: {
+        variables: Param[]
+    }[]
+}
+
 export interface StartNode extends BaseNode {
     type: 'Start'
-    data: any
+    data: StartNodeData
 }
 
 export interface EndNode extends BaseNode {
