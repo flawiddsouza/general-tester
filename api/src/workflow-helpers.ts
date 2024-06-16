@@ -1,4 +1,12 @@
-import { WorkflowData } from './global'
+import {
+    WorkflowData,
+    SocketIO,
+    NodeMap,
+    EdgeMap,
+    SocketIoMap,
+    WebSocketMap,
+    NodeOutput,
+} from './global'
 import { edge, node, workflowRun } from './schema'
 import type {
     HTTPRequestNode,
@@ -15,24 +23,16 @@ import type {
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
-import ioV2, { Socket as SocketV2 } from 'socket.io-client-v2'
+import ioV2 from 'socket.io-client-v2'
 // @ts-ignore
-import { Socket as SocketV3, io as ioV3 } from 'socket.io-client-v3'
-import { Socket as SocketV4, io as ioV4 } from 'socket.io-client-v4'
+import { io as ioV3 } from 'socket.io-client-v3'
+import { io as ioV4 } from 'socket.io-client-v4'
 import * as vm from 'vm'
 import { createWorkflowLog, createWorkflowRun, updateWorkflowRun } from './db'
 import { nanoid } from 'nanoid'
 import { constants } from '../../ui/src/constants'
 
 const { STATUS } = constants
-
-type SocketIO = SocketV2 | SocketV3 | SocketV4
-
-type NodeMap = { [id: string]: node }
-type EdgeMap = { [source: string]: edge[] }
-type SocketIoMap = { [id: string]: SocketIO }
-type WebSocketMap = { [id: string]: WebSocket }
-type NodeOutput = { [nodeId: string]: any }
 
 const socketIoConnections: SocketIoMap = {}
 const webSocketConnections: WebSocketMap = {}
