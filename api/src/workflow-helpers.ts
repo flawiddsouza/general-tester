@@ -15,10 +15,10 @@ import type {
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
-import ioV2 from 'socket.io-client-v2'
+import ioV2, { Socket as SocketV2 } from 'socket.io-client-v2'
 // @ts-ignore
-import { io as ioV3 } from 'socket.io-client-v3'
-import { io as ioV4 } from 'socket.io-client-v4'
+import { Socket as SocketV3, io as ioV3 } from 'socket.io-client-v3'
+import { Socket as SocketV4, io as ioV4 } from 'socket.io-client-v4'
 import * as vm from 'vm'
 import { createWorkflowLog, createWorkflowRun, updateWorkflowRun } from './db'
 import { nanoid } from 'nanoid'
@@ -26,9 +26,11 @@ import { constants } from '../../ui/src/constants'
 
 const { STATUS } = constants
 
+type SocketIO = SocketV2 | SocketV3 | SocketV4
+
 type NodeMap = { [id: string]: node }
 type EdgeMap = { [source: string]: edge[] }
-type SocketIoMap = { [id: string]: any }
+type SocketIoMap = { [id: string]: SocketIO }
 type WebSocketMap = { [id: string]: WebSocket }
 type NodeOutput = { [nodeId: string]: any }
 
@@ -436,7 +438,7 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
 }
 
 async function handleSocketIONode(workflowRunId: workflowRun['id'], parallelIndex: number, node: SocketIONode) {
-    let socketConnection
+    let socketConnection: SocketIO | null = null
 
     try {
         new URL(node.data.url)
@@ -473,10 +475,23 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], parallelInde
         })
     }
 
+    if (!socketConnection) {
+        logWorkflowMessage({
+            workflowRunId,
+            parallelIndex,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Failed to create Socket.IO connection',
+            debug: false
+        })
+
+        return false
+    }
+
     socketIoConnections[node.id] = socketConnection
 
     const connectionTimeoutMS = 5 * 1000
-    let timeoutId
+    let timeoutId: Timer
 
     const connectionPromise = new Promise<boolean>((resolve) => {
         timeoutId = setTimeout(() => {
@@ -662,7 +677,7 @@ function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): st
 }
 
 async function handleWebSocketNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: WebSocketNode) {
-    let socketConnection
+    let socketConnection: WebSocket
 
     try {
         new URL(node.data.url)

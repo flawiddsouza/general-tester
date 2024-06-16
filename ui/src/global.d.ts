@@ -6,6 +6,37 @@ declare global {
     }
 }
 
+declare module 'socket.io-client-v2' {
+    import { EventEmitter } from 'events';
+
+    namespace SocketIOClient {
+        interface Socket extends EventEmitter {
+            id: string;
+            connected: boolean;
+            disconnected: boolean;
+            connect(): this;
+            open(): this;
+            disconnect(): this;
+            close(): this;
+            emit(event: string, ...args: any[]): this;
+            on(event: 'connect' | 'disconnect' | string, callback: (...args: any[]) => void): this;
+            once(event: string, callback: (...args: any[]) => void): this;
+            onevent(packet: { type: string; data: any[] }): void;
+        }
+
+        interface ManagerOptions {
+            reconnection?: boolean;
+        }
+
+        interface SocketOptions {
+            path?: string;
+        }
+    }
+
+    function io(uri: string, opts?: SocketIOClient.ManagerOptions & SocketIOClient.SocketOptions): SocketIOClient.Socket;
+    export = io;
+}
+
 export interface BaseNode {
     id: string
     workflowId: string
