@@ -68,6 +68,7 @@ export type workflowRun = Static<typeof workflowRun>
 
 export const workflowLogs = sqliteTable('workflowLogs', {
     workflowRunId: text('workflowRunId').references(() => workflowRuns.id, { onDelete: 'restrict' }).notNull(),
+    parallelIndex: integer('parallelIndex').notNull(),
     nodeId: text('nodeId'),
     nodeType: text('nodeType'),
     message: text('message').notNull(),

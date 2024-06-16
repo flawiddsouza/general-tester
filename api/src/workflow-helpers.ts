@@ -35,12 +35,13 @@ type NodeOutput = { [nodeId: string]: any }
 const socketIoConnections: SocketIoMap = {}
 const webSocketConnections: WebSocketMap = {}
 
-async function logWorkflowMessage({ workflowRunId, nodeId = null, nodeType = null, message, data = null, debug }: WorkflowLog) {
+async function logWorkflowMessage({ workflowRunId, parallelIndex, nodeId = null, nodeType = null, message, data = null, debug }: WorkflowLog) {
     const timestamp = new Date().toISOString()
 
     const workflowLog = {
         timestamp,
         workflowRunId,
+        parallelIndex,
         nodeId,
         nodeType,
         debug,
@@ -82,11 +83,14 @@ export async function runWorkflow(workflowData: WorkflowData) {
         edges[edge.source].push(edge)
     })
 
+    const parallelIndex = 0
+
     // Find the start node
     const startNode = workflowData.nodes.find(node => node.type === 'Start')
     if (!startNode) {
         logWorkflowMessage({
             workflowRunId: workflowRunId,
+            parallelIndex,
             message: 'No start node found, ending workflow run',
             debug: false,
         })
@@ -96,18 +100,19 @@ export async function runWorkflow(workflowData: WorkflowData) {
     const workflowEnvironment = workflowData.environments.find(environment => environment.id === workflowData.workflow.currentEnvironmentId)
 
     // Start processing the workflow
-    processNode(workflowRunId, startNode, nodes, edges, outputs, null, [], workflowEnvironment ? workflowEnvironment.env : {})
+    processNode(workflowRunId, parallelIndex, startNode, nodes, edges, outputs, null, [], workflowEnvironment ? workflowEnvironment.env : {})
 
     return newWorkflowRun
 }
 
-async function markWorkflowAsFailed(workflowRunId: workflowRun['id']) {
+async function markWorkflowAsFailed(workflowRunId: workflowRun['id'], parallelIndex: number) {
     await updateWorkflowRun(workflowRunId, {
         status: STATUS.FAILED
     })
 
     logWorkflowMessage({
         workflowRunId,
+        parallelIndex,
         message: 'Workflow run failed',
         debug: false,
     })
@@ -121,7 +126,7 @@ async function markWorkflowAsCompleted(workflowRunId: workflowRun['id']) {
 
 const variableMatchingRegex = /{{(.*?)}}/g
 
-function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nodeType: node['type'], input: any, data: any, variables: any, environment: any) {
+function parseNodeData(workflowRunId: workflowRun['id'], parallelIndex: number, nodeId: node['id'], nodeType: node['type'], input: any, data: any, variables: any, environment: any) {
     const nodeDataProperties = Object.keys(data)
 
     const parsedData: any = {}
@@ -152,6 +157,7 @@ function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nod
             } catch(e: any) {
                 logWorkflowMessage({
                     workflowRunId,
+                    parallelIndex,
                     nodeId,
                     nodeType,
                     message: 'Error',
@@ -170,7 +176,7 @@ function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nod
     return parsedData
 }
 
-async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null, variables: Param[], environment: any) {
+async function processNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null, variables: Param[], environment: any) {
     let message = 'Processing node'
 
     if (node.type === 'Start') {
@@ -186,7 +192,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         acc[variable.name] = variable.value
         return acc
     }, {} as any)
-    const parsedNodeData = parseNodeData(workflowRunId, node.id, node.type, input, node.data, variablesConverted, environment)
+    const parsedNodeData = parseNodeData(workflowRunId, parallelIndex, node.id, node.type, input, node.data, variablesConverted, environment)
 
     let logData: any
 
@@ -205,6 +211,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
     logWorkflowMessage({
         workflowRunId,
+        parallelIndex,
         nodeId: node.id,
         nodeType: node.type,
         message,
@@ -219,43 +226,43 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
             break
 
         case 'HTTPRequest':
-            outputs[node.id] = await handleHTTPRequestNode(workflowRunId, node as HTTPRequestNode)
+            outputs[node.id] = await handleHTTPRequestNode(workflowRunId, parallelIndex, node as HTTPRequestNode)
             break
 
         case 'SocketIO':
-            outputs[node.id] = await handleSocketIONode(workflowRunId, node as SocketIONode)
+            outputs[node.id] = await handleSocketIONode(workflowRunId, parallelIndex, node as SocketIONode)
             if(outputs[node.id] === false) {
-                await markWorkflowAsFailed(workflowRunId)
+                await markWorkflowAsFailed(workflowRunId, parallelIndex)
                 return
             }
             break
 
         case 'SocketIOListener':
-            outputs[node.id] = await handleSocketIOListenerNode(workflowRunId, node as SocketIOListenerNode, nodes, edges)
+            outputs[node.id] = await handleSocketIOListenerNode(workflowRunId, parallelIndex, node as SocketIOListenerNode, nodes, edges)
             break
 
         case 'SocketIOEmitter':
-            handleSocketIOEmitterNode(workflowRunId, node as SocketIOEmitterNode, nodes, edges)
+            handleSocketIOEmitterNode(workflowRunId, parallelIndex, node as SocketIOEmitterNode, nodes, edges)
             break
 
         case 'WebSocket':
-            outputs[node.id] = await handleWebSocketNode(workflowRunId, node as WebSocketNode)
+            outputs[node.id] = await handleWebSocketNode(workflowRunId, parallelIndex, node as WebSocketNode)
             if(outputs[node.id] === false) {
-                await markWorkflowAsFailed(workflowRunId)
+                await markWorkflowAsFailed(workflowRunId, parallelIndex)
                 return
             }
             break
 
         case 'WebSocketListener':
-            outputs[node.id] = await handleWebSocketListenerNode(workflowRunId, node as WebSocketListenerNode, nodes, edges)
+            outputs[node.id] = await handleWebSocketListenerNode(workflowRunId, parallelIndex, node as WebSocketListenerNode, nodes, edges)
             break
 
         case 'WebSocketEmitter':
-            handleWebSocketEmitterNode(workflowRunId, node as WebSocketEmitterNode, nodes, edges)
+            handleWebSocketEmitterNode(workflowRunId, parallelIndex, node as WebSocketEmitterNode, nodes, edges)
             break
 
         case 'IfCondition':
-            const conditionResult = handleIfConditionNode(workflowRunId, node as IfConditionNode)
+            const conditionResult = handleIfConditionNode(workflowRunId, parallelIndex, node as IfConditionNode)
             outputs[node.id] = conditionResult
 
             const ifEdges = edges[node.id] || []
@@ -263,10 +270,11 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
             if (nextEdge) {
                 const nextNode = nodes[nextEdge.target]
-                await processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables, environment)
+                await processNode(workflowRunId, parallelIndex, nextNode, nodes, edges, outputs, node, variables, environment)
             } else {
                 logWorkflowMessage({
                     workflowRunId,
+                    parallelIndex,
                     nodeId: node.id,
                     nodeType: node.type,
                     message: `No matching connection found for condition ${conditionResult}`,
@@ -282,6 +290,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         default:
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Unknown node type',
@@ -295,6 +304,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
     if (!nextEdges) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'No connections found',
@@ -305,6 +315,7 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
 
     logWorkflowMessage({
         workflowRunId,
+        parallelIndex,
         nodeId: node.id,
         nodeType: node.type,
         message: `Found ${nextEdges.length} connection${nextEdges.length === 1 ? '' : 's'}`,
@@ -315,29 +326,30 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         const startNode = node as StartNode
         if(startNode.data.parallelEntries && startNode.data.parallelEntries.length > 0) {
             await Promise.all(
-                startNode.data.parallelEntries.map(entry => {
+                startNode.data.parallelEntries.map((parallelEntry, parallelEntryIndex) => {
                     // we do this so each parallel entry has its own copy of the outputs and doesn't get overwritten by other parallel entries and cause race conditions
                     const newOutputs = { ...outputs }
-                    return executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, newOutputs, node, entry.variables, environment)
+                    const parallelIndex = parallelEntryIndex + 1
+                    return executeTasksInParallel(nextEdges, workflowRunId, parallelIndex, nodes, edges, newOutputs, node, parallelEntry.variables, environment)
                 })
             )
             return
         }
     }
 
-    await executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, variables, environment)
+    await executeTasksInParallel(nextEdges, workflowRunId, parallelIndex, nodes, edges, outputs, node, variables, environment)
 }
 
-async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflowRun['id'], nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, node: node, variables: Param[], environment: any) {
+async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflowRun['id'], parallelIndex: number, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, node: node, variables: Param[], environment: any) {
     return Promise.all(
         nextEdges.map((edge) => {
             const nextNode = structuredClone(nodes[edge.target])
-            return processNode(workflowRunId, nextNode, nodes, edges, outputs, node, variables, environment)
+            return processNode(workflowRunId, parallelIndex, nextNode, nodes, edges, outputs, node, variables, environment)
         })
     )
 }
 
-async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], node: HTTPRequestNode) {
+async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: HTTPRequestNode) {
     let parsedUrl: URL
 
     try {
@@ -345,6 +357,7 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], node: HTT
     } catch (error) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Invalid URL',
@@ -376,6 +389,7 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], node: HTT
     } catch (e) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Failed to parse response to JSON',
@@ -386,6 +400,7 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], node: HTT
 
     logWorkflowMessage({
         workflowRunId,
+        parallelIndex,
         nodeId: node.id,
         nodeType: node.type,
         message: 'Response',
@@ -420,7 +435,7 @@ function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): str
     return socketIONodeId
 }
 
-async function handleSocketIONode(workflowRunId: workflowRun['id'], node: SocketIONode) {
+async function handleSocketIONode(workflowRunId: workflowRun['id'], parallelIndex: number, node: SocketIONode) {
     let socketConnection
 
     try {
@@ -428,6 +443,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
     } catch (error) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Invalid URL',
@@ -466,6 +482,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
         timeoutId = setTimeout(() => {
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Connection timeout',
@@ -480,6 +497,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
 
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Connected',
@@ -493,6 +511,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
     socketConnection.on('disconnect', () => {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Disconnected',
@@ -509,6 +528,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
             const receivedMessage = `[${event}] ${typeof args[0] === 'object' ? JSON.stringify(args[0], null, 4) : args[0]}`
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Received event',
@@ -524,6 +544,7 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
             const receivedMessage = `[${event}] ${typeof args[0] === 'object' ? JSON.stringify(args[0], null, 4) : args[0]}`
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Received event',
@@ -536,12 +557,13 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], node: Socket
     return connectionPromise
 }
 
-async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], node: SocketIOListenerNode, nodes: NodeMap, edges: EdgeMap) {
+async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: SocketIOListenerNode, nodes: NodeMap, edges: EdgeMap) {
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'No Socket.IO node found',
@@ -554,6 +576,7 @@ async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], node
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: `No connection found for node ${socketIONodeId}`,
@@ -566,6 +589,7 @@ async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], node
         socket.on(node.data.eventName, (data: any) => {
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: `Received event: ${node.data.eventName}`,
@@ -581,12 +605,13 @@ async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], node
     })
 }
 
-function handleSocketIOEmitterNode(workflowRunId: workflowRun['id'], node: SocketIOEmitterNode, nodes: NodeMap, edges: EdgeMap) {
+function handleSocketIOEmitterNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: SocketIOEmitterNode, nodes: NodeMap, edges: EdgeMap) {
     const socketIONodeId = findSocketIONodeId(node.id, nodes, edges)
 
     if (!socketIONodeId) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'No Socket.IO node found',
@@ -599,6 +624,7 @@ function handleSocketIOEmitterNode(workflowRunId: workflowRun['id'], node: Socke
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: `No connection found for node ${socketIONodeId}`,
@@ -635,7 +661,7 @@ function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): st
     return webSocketNodeId
 }
 
-async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSocketNode) {
+async function handleWebSocketNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: WebSocketNode) {
     let socketConnection
 
     try {
@@ -643,6 +669,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
     } catch (error) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Invalid URL',
@@ -665,6 +692,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
         timeoutId = setTimeout(() => {
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Connection timeout',
@@ -679,6 +707,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
 
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Connected',
@@ -695,6 +724,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
 
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: 'Disconnected',
@@ -711,6 +741,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
         const receivedMessage = event.data
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Received message',
@@ -722,6 +753,7 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
     socketConnection.addEventListener('error', (event) => {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'Error',
@@ -733,12 +765,13 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], node: WebSo
     return connectionPromise
 }
 
-async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], node: WebSocketListenerNode, nodes: NodeMap, edges: EdgeMap) {
+async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: WebSocketListenerNode, nodes: NodeMap, edges: EdgeMap) {
     const webSocketNodeId = findWebSocketNodeId(node.id, nodes, edges)
 
     if (!webSocketNodeId) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'No WebSocket node found',
@@ -751,6 +784,7 @@ async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], nod
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: `No connection found for node ${webSocketNodeId}`,
@@ -764,6 +798,7 @@ async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], nod
             const data = event.data
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: `Received event: ${node.data.eventName}`,
@@ -779,12 +814,13 @@ async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], nod
     })
 }
 
-function handleWebSocketEmitterNode(workflowRunId: workflowRun['id'], node: WebSocketEmitterNode, nodes: NodeMap, edges: EdgeMap) {
+function handleWebSocketEmitterNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: WebSocketEmitterNode, nodes: NodeMap, edges: EdgeMap) {
     const webSocketNodeId = findWebSocketNodeId(node.id, nodes, edges)
 
     if (!webSocketNodeId) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: 'No WebSocket node found',
@@ -797,6 +833,7 @@ function handleWebSocketEmitterNode(workflowRunId: workflowRun['id'], node: WebS
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
+            parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
             message: `No connection found for node ${webSocketNodeId}`,
@@ -808,7 +845,7 @@ function handleWebSocketEmitterNode(workflowRunId: workflowRun['id'], node: WebS
     socket.send(node.data.eventBody)
 }
 
-function handleIfConditionNode(workflowRunId: workflowRun['id'], node: IfConditionNode) {
+function handleIfConditionNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: IfConditionNode) {
     let conditionMet = false
 
     switch (node.data.operator) {
@@ -827,6 +864,7 @@ function handleIfConditionNode(workflowRunId: workflowRun['id'], node: IfConditi
         default:
             logWorkflowMessage({
                 workflowRunId,
+                parallelIndex,
                 nodeId: node.id,
                 nodeType: node.type,
                 message: `Unsupported operator: ${node.data.operator}`,
@@ -837,6 +875,7 @@ function handleIfConditionNode(workflowRunId: workflowRun['id'], node: IfConditi
 
     logWorkflowMessage({
         workflowRunId,
+        parallelIndex,
         nodeId: node.id,
         nodeType: node.type,
         message: `Condition ${conditionMet ? 'met' : 'not met'}`,

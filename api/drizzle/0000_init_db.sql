@@ -36,6 +36,7 @@ CREATE TABLE `nodes` (
 --> statement-breakpoint
 CREATE TABLE `workflowLogs` (
 	`workflowRunId` text NOT NULL,
+	`parallelIndex` integer NOT NULL,
 	`nodeId` text,
 	`nodeType` text,
 	`message` text NOT NULL,

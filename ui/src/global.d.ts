@@ -177,6 +177,7 @@ export interface WorkflowData {
 export interface WorkflowLog {
     timestamp?: string,
     workflowRunId: string,
+    parallelIndex: number,
     nodeId?: string | null,
     nodeType?: string | null,
     message: string,

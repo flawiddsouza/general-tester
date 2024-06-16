@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "093aae53-97f2-48a9-bb31-a05152926f88",
+  "id": "849585d1-c417-4cb6-af91-10fadfb22880",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "edges": {
@@ -265,6 +265,13 @@
         "workflowRunId": {
           "name": "workflowRunId",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "parallelIndex": {
+          "name": "parallelIndex",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false

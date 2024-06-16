@@ -48,7 +48,12 @@
             <div style="user-select: text;">
                 <div v-for="(log, logIndex) in filteredWorkflowLogs" :class="{ 'mt-1': logIndex > 0 }" :style="{ 'backgroundColor': log.debug ? '#c8cfff' : '', padding: log.debug ? '0.5rem' : '' }">
                     <div style="font-size: 0.7rem; color: #797979;">{{ formatTimestamp(log.timestamp!) }}</div>
-                    <div v-if="log.nodeType" class="bold cursor-pointer" @click="moveToNode(log.nodeId!)">{{ log.nodeType }}</div>
+                    <div v-if="log.nodeType" class="bold cursor-pointer" @click="moveToNode(log.nodeId!)">
+                        {{ log.nodeType }}
+                        <template v-if="log.parallelIndex > 0">
+                            - {{ log.parallelIndex }}
+                        </template>
+                    </div>
                     <div>{{ log.message }}</div>
                     <template v-if="log.data">
                         <textarea readonly class="full-width" style="min-height: 7rem; resize: vertical; outline: none;">{{ log.data }}</textarea>
