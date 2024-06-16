@@ -286,7 +286,24 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
             return
 
         case 'End':
+            const parallelIndexSocketConnections = socketIoConnections[workflowRunId]?.[parallelIndex]
+            if (parallelIndexSocketConnections) {
+                for (const nodeId in parallelIndexSocketConnections) {
+                    parallelIndexSocketConnections[nodeId].disconnect()
+                }
+                delete socketIoConnections[workflowRunId][parallelIndex]
+            }
+
+            const parallelIndexWebSocketConnections = webSocketConnections[workflowRunId]?.[parallelIndex]
+            if (parallelIndexWebSocketConnections) {
+                for (const nodeId in parallelIndexWebSocketConnections) {
+                    parallelIndexWebSocketConnections[nodeId].close()
+                }
+                delete webSocketConnections[workflowRunId][parallelIndex]
+            }
+
             await markWorkflowAsCompleted(workflowRunId)
+
             return
 
         default:
