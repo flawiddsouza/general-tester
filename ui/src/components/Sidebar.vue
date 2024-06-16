@@ -1,12 +1,12 @@
 <template>
     <aside id="sidebar">
         <div class="tabs full-width">
-            <div @click="selectedTab = 'workflows'" :class="{ active: selectedTab === 'workflows' }">Workflows</div>
-            <div @click="selectedTab = 'nodes'" :class="{ active: selectedTab === 'nodes' }">Nodes</div>
-            <div @click="selectedTab = 'runs'" :class="{ active: selectedTab === 'runs' }">Runs</div>
-            <div @click="selectedTab = 'log'" :class="{ active: selectedTab === 'log' }">Log</div>
+            <div @click="store.sidebarSelectedTab = 'workflows'" :class="{ active: store.sidebarSelectedTab === 'workflows' }">Workflows</div>
+            <div @click="store.sidebarSelectedTab = 'nodes'" :class="{ active: store.sidebarSelectedTab === 'nodes' }">Nodes</div>
+            <div @click="store.sidebarSelectedTab = 'runs'" :class="{ active: store.sidebarSelectedTab === 'runs' }">Runs</div>
+            <div @click="store.sidebarSelectedTab = 'log'" :class="{ active: store.sidebarSelectedTab === 'log' }">Log</div>
         </div>
-        <div v-if="selectedTab === 'workflows'" class="grid" style="grid-template-rows: auto 1fr;">
+        <div v-if="store.sidebarSelectedTab === 'workflows'" class="grid" style="grid-template-rows: auto 1fr;">
             <div class="sidebar-item" @click="addNewWorkflow()">+ Add new workflow</div>
             <div class="pb-4">
                 <div class="sidebar-item grid" style="grid-template-columns: 1fr auto auto;" :class="{ active: store.activeWorkflow?.id === workflow.id }" v-for="workflow in store.workflows" @click="store.activeWorkflow = workflow">
@@ -20,14 +20,14 @@
                 </div>
             </div>
         </div>
-        <div v-if="selectedTab === 'nodes'" class="p-2">
+        <div v-if="store.sidebarSelectedTab === 'nodes'" class="p-2">
             <div>You can drag these nodes to the pane</div>
 
             <div class="nodes">
                 <div class="node mt-1 cursor-grab p-1" :draggable="store.activeWorkflow ? true : false" @dragstart="onDragStart($event, nodesType.name as any)" v-for="nodesType in nodesTypes">{{ nodesType.label }}</div>
             </div>
         </div>
-        <div v-if="selectedTab === 'runs'">
+        <div v-if="store.sidebarSelectedTab === 'runs'">
             <div class="pb-4">
                 <div class="sidebar-item grid" style="grid-template-columns: 1fr auto auto;" :class="{ active: store.activeWorkflowRun?.id === workflowRun.id }" v-for="workflowRun in store.workflowRuns" @click="store.activeWorkflowRun = workflowRun">
                     <div>{{ formatTimestamp(workflowRun.createdAt + 'Z') }}</div>
@@ -38,7 +38,7 @@
                 <div class="p-2" v-if="store.workflowRuns.length === 0">No runs found</div>
             </div>
         </div>
-        <div v-if="selectedTab === 'log'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
+        <div v-if="store.sidebarSelectedTab === 'log'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
             <div class="mb-1">
                 <label class="cursor-pointer">
                     <input type="checkbox" v-model="showDebugLogs" />
@@ -79,7 +79,6 @@ const { onDragStart } = useDragAndDrop()
 const store = useStore()
 
 const nodesTypes = ref(constants.NODE_TYPES)
-const selectedTab = ref('workflows')
 const showDebugLogs = ref(false)
 
 const filteredWorkflowLogs = computed(() => {

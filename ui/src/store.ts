@@ -17,6 +17,7 @@ interface State {
     activeWorkflowRun: workflowRun | null
     workflowLogs: WorkflowLog[]
     vueFlowRef: Ref<any> | null
+    sidebarSelectedTab: 'workflows' | 'nodes' | 'runs' | 'log'
 }
 
 export const useStore = defineStore('store', {
@@ -33,6 +34,7 @@ export const useStore = defineStore('store', {
             activeWorkflowRun: null,
             workflowLogs: [],
             vueFlowRef: null,
+            sidebarSelectedTab: 'workflows',
         }
     },
     actions: {
@@ -114,6 +116,7 @@ export const useStore = defineStore('store', {
             const workflowRun = await api.runWorkflow(workflowId)
             this.fetchWorkflowRuns()
             this.activeWorkflowRun = workflowRun
+            this.sidebarSelectedTab = 'log'
         },
         addWorkflowLog(data: string) {
             const parsedData: WorkflowLog = JSON.parse(data)
