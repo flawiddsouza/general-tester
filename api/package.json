@@ -3,7 +3,9 @@
   "version": "1.0.50",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts",
+    "typecheck": "bunx tsc --watch --noEmit",
+    "watch": "bun run --watch src/index.ts",
+    "dev": "concurrently \"npm run watch\" \"npm run typecheck\"",
     "start": "bun run src/index.ts"
   },
   "dependencies": {
@@ -21,6 +23,7 @@
   "devDependencies": {
     "better-sqlite3": "^11.0.0",
     "bun-types": "latest",
+    "concurrently": "^8.2.2",
     "drizzle-kit": "^0.22.1"
   },
   "module": "src/index.js"
