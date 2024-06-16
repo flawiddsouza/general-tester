@@ -488,7 +488,9 @@ async function handleSocketIONode(workflowRunId: workflowRun['id'], parallelInde
         return false
     }
 
-    socketIoConnections[node.id] = socketConnection
+    socketIoConnections[workflowRunId] = socketIoConnections[workflowRunId] || {}
+    socketIoConnections[workflowRunId][parallelIndex] = socketIoConnections[workflowRunId][parallelIndex] || {}
+    socketIoConnections[workflowRunId][parallelIndex][node.id] = socketConnection
 
     const connectionTimeoutMS = 5 * 1000
     let timeoutId: Timer
@@ -587,7 +589,7 @@ async function handleSocketIOListenerNode(workflowRunId: workflowRun['id'], para
         return
     }
 
-    const socket = socketIoConnections[socketIONodeId]
+    const socket = socketIoConnections[workflowRunId][parallelIndex][socketIONodeId]
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
@@ -635,7 +637,8 @@ function handleSocketIOEmitterNode(workflowRunId: workflowRun['id'], parallelInd
         return
     }
 
-    const socket = socketIoConnections[socketIONodeId]
+    const socket = socketIoConnections[workflowRunId][parallelIndex][socketIONodeId]
+
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
@@ -696,7 +699,9 @@ async function handleWebSocketNode(workflowRunId: workflowRun['id'], parallelInd
 
     socketConnection = new WebSocket(node.data.url)
 
-    webSocketConnections[node.id] = socketConnection
+    webSocketConnections[workflowRunId] = webSocketConnections[workflowRunId] || {}
+    webSocketConnections[workflowRunId][parallelIndex] = webSocketConnections[workflowRunId][parallelIndex] || {}
+    webSocketConnections[workflowRunId][parallelIndex][node.id] = socketConnection
 
     let openEventReceived = false
 
@@ -795,7 +800,8 @@ async function handleWebSocketListenerNode(workflowRunId: workflowRun['id'], par
         return
     }
 
-    const socket = webSocketConnections[webSocketNodeId]
+    const socket = webSocketConnections[workflowRunId][parallelIndex][webSocketNodeId]
+
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,
@@ -844,7 +850,7 @@ function handleWebSocketEmitterNode(workflowRunId: workflowRun['id'], parallelIn
         return
     }
 
-    const socket = webSocketConnections[webSocketNodeId]
+    const socket = webSocketConnections[workflowRunId][parallelIndex][webSocketNodeId]
     if (!socket) {
         logWorkflowMessage({
             workflowRunId,

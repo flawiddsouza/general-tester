@@ -47,8 +47,8 @@ export type NodeMap = { [id: string]: node }
 
 export type EdgeMap = { [source: string]: edge[] }
 
-export type SocketIoMap = { [id: string]: SocketIO }
+export type SocketIoMap = { [workflowRunId: string]: { [branchId: string]: { [id: string]: SocketIO } } }
 
-export type WebSocketMap = { [id: string]: WebSocket }
+export type WebSocketMap = { [workflowRunId: string]: { [branchId: string]: { [id: string]: WebSocket } } }
 
 export type NodeOutput = { [nodeId: string]: any }
