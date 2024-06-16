@@ -314,7 +314,9 @@ async function processNode(workflowRunId: workflowRun['id'], node: node, nodes: 
         if(startNode.data.parallelEntries && startNode.data.parallelEntries.length > 0) {
             await Promise.all(
                 startNode.data.parallelEntries.map(entry => {
-                    return executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, outputs, node, entry.variables, environment)
+                    // we do this so each parallel entry has its own copy of the outputs and doesn't get overwritten by other parallel entries and cause race conditions
+                    const newOutputs = { ...outputs }
+                    return executeTasksInParallel(nextEdges, workflowRunId, nodes, edges, newOutputs, node, entry.variables, environment)
                 })
             )
             return
