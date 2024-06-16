@@ -159,6 +159,8 @@ function parseNodeData(workflowRunId: workflowRun['id'], nodeId: node['id'], nod
                     debug: true
                 })
                 parsedData[key] = data[key]
+            } finally {
+                variableMatchingRegex.lastIndex = 0
             }
         }
 
