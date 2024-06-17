@@ -156,6 +156,7 @@ function parseNodeData(workflowRunId: workflowRun['id'], parallelIndex: number, 
             try {
                 const result = script.runInContext(sandbox)
                 jsonData = jsonData.replaceAll(outerMatch, result)
+                variableMatchingRegex.lastIndex = 0
             } catch(e: any) {
                 logWorkflowMessage({
                     workflowRunId,
@@ -167,8 +168,6 @@ function parseNodeData(workflowRunId: workflowRun['id'], parallelIndex: number, 
                     debug: true
                 })
                 parsedData[key] = data[key]
-            } finally {
-                variableMatchingRegex.lastIndex = 0
             }
         }
 
