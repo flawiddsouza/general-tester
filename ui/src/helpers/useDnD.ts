@@ -1,7 +1,18 @@
 import { useVueFlow } from '@vue-flow/core'
 import { ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
-import { Node, HTTPRequestNodeData, SocketIOListenerNodeData, SocketIONodeData, SocketIOEmitterNodeData, IfConditionNodeData, WebSocketNodeData, WebSocketListenerNodeData, WebSocketEmitterNodeData } from '@/global'
+import {
+    Node,
+    HTTPRequestNodeData,
+    SocketIOListenerNodeData,
+    SocketIONodeData,
+    SocketIOEmitterNodeData,
+    IfConditionNodeData,
+    WebSocketNodeData,
+    WebSocketListenerNodeData,
+    WebSocketEmitterNodeData,
+    DelayNodeData,
+} from '@/global'
 import { StoreType } from '@/store'
 
 const state = {
@@ -94,6 +105,14 @@ function createEmptyNodeData(type: Node['type']) {
             leftOperand: '',
             operator: '==',
             rightOperand: '',
+        }
+
+        return data
+    }
+
+    if (type === 'Delay') {
+        const data: DelayNodeData = {
+            delayInMS: 0,
         }
 
         return data

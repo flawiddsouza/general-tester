@@ -44,6 +44,10 @@ export const constants = {
             name: 'IfCondition',
             label: 'If Condition'
         },
+        {
+            name: 'Delay',
+            label: 'Delay'
+        },
     ],
     STATUS: {
         RUNNING: 1,

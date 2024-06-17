@@ -52,6 +52,9 @@
             <IfCondition :node="(node as unknown as IfConditionNode)" />
         </template>
 
+        <template #node-Delay="node">
+            <Delay :node="(node as unknown as DelayNode)" />
+        </template>
     </VueFlow>
 </template>
 
@@ -72,6 +75,7 @@ import {
     WebSocketListenerNode,
     WebSocketEmitterNode,
     IfConditionNode,
+    DelayNode,
 } from '@/global'
 import Start from './Nodes/Start.vue'
 import End from './Nodes/End.vue'
@@ -83,6 +87,7 @@ import WebSocket from './Nodes/WebSocket.vue'
 import WebSocketListener from './Nodes/WebSocketListener.vue'
 import WebSocketEmitter from './Nodes/WebSocketEmitter.vue'
 import IfCondition from './Nodes/IfCondition.vue'
+import Delay from './Nodes/Delay.vue'
 import { useStore } from '@/store'
 import { nanoid } from 'nanoid'
 

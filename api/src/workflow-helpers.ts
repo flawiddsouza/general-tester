@@ -20,6 +20,7 @@ import type {
     WebSocketEmitterNode,
     StartNode,
     Param,
+    DelayNode,
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
@@ -284,6 +285,10 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
             }
             return
 
+        case 'Delay':
+            await handleDelayNode(workflowRunId, parallelIndex, node as DelayNode)
+            break
+
         case 'End':
             const parallelIndexSocketConnections = socketIoConnections[workflowRunId]?.[parallelIndex]
             if (parallelIndexSocketConnections) {
@@ -365,6 +370,31 @@ async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflow
             return processNode(workflowRunId, parallelIndex, nextNode, nodes, edges, outputs, node, variables, environment)
         })
     )
+}
+
+async function handleDelayNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: DelayNode) {
+    logWorkflowMessage({
+        workflowRunId,
+        parallelIndex,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: `Starting delay of ${node.data.delayInMS} ms`,
+        debug: false,
+    })
+
+    return new Promise<void>((resolve) => {
+        setTimeout(() => {
+            logWorkflowMessage({
+                workflowRunId,
+                parallelIndex,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Delay completed',
+                debug: false,
+            })
+            resolve()
+        }, node.data.delayInMS)
+    })
 }
 
 async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: HTTPRequestNode) {

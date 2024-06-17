@@ -126,6 +126,15 @@ export interface IfConditionNode extends BaseNode {
     data: IfConditionNodeData
 }
 
+export interface DelayNodeData {
+    delayInMS: number
+}
+
+export interface DelayNode extends BaseNode {
+    type: 'Delay'
+    data: DelayNodeData
+}
+
 export type Node =
     | StartNode
     | EndNode
@@ -137,6 +146,7 @@ export type Node =
     | WebSocketListenerNode
     | WebSocketEmitterNode
     | IfConditionNode
+    | DelayNode
 
 export interface Edge {
     id: string
