@@ -19,6 +19,7 @@ import {
     getWorkflowRuns,
     deleteWorkflowRun,
     getWorkflowRunLogs,
+    importWorkflow,
 } from './db'
 import { runWorkflow } from './workflow-helpers'
 import { staticPlugin } from '@elysiajs/static'
@@ -44,6 +45,13 @@ const api = new Elysia({ prefix: '/api' })
         return updateWorkflow(params.id, body)
     }, {
         body: t.Partial(workflow)
+    })
+    .post('/workflow/import', async ({ body }) => {
+        return importWorkflow(body.workflowData)
+    }, {
+        body: t.Object({
+            workflowData: t.String()
+        })
     })
     .delete('/workflow/:id', ({ params }) => {
         return deleteWorkflow(params.id)

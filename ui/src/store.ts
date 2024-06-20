@@ -206,6 +206,10 @@ export const useStore = defineStore('store', {
 
             await this.fetchActiveWorkflow()
         },
+        async importWorkflow(workflowData: string) {
+            const newWorkflow = await api.importWorkflow(workflowData)
+            await this.fetchWorkflows(newWorkflow.id)
+        },
     },
 })
 

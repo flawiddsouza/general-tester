@@ -150,3 +150,50 @@ export async function getWorkflowRunLogs(workflowRunId: workflowRun['id']) {
 export async function createWorkflowLog(log: workflowLog) {
     return await db.insert(workflowLogs).values(log)
 }
+
+export async function importWorkflow(workflowDataString: string) : Promise<workflow> {
+    const workflowData: WorkflowData = JSON.parse(workflowDataString)
+
+    const newWorkflowId = nanoid()
+    const newWorkflow = {
+        ...workflowData.workflow,
+        id: newWorkflowId,
+        currentEnvironmentId: null
+    }
+    await createWorkflow(newWorkflow)
+
+    for (const environment of workflowData.environments) {
+        const newEnvironment = {
+            ...environment,
+            id: nanoid(),
+            workflowId: newWorkflowId
+        }
+        await createEnvironment(newEnvironment)
+    }
+
+    const nodeIdMap = new Map<string, string>()
+
+    for (const node of workflowData.nodes) {
+        const newNodeId = nanoid()
+        nodeIdMap.set(node.id, newNodeId)
+        await createNode({
+            ...node,
+            id: newNodeId,
+            workflowId: newWorkflowId
+        })
+    }
+
+    for (const edge of workflowData.edges) {
+        const newEdgeId = nanoid()
+        const newEdge = {
+            ...edge,
+            id: newEdgeId,
+            workflowId: newWorkflowId,
+            source: nodeIdMap.get(edge.source) || edge.source,
+            target: nodeIdMap.get(edge.target) || edge.target
+        }
+        await createEdge(newEdge)
+    }
+
+    return newWorkflow
+}

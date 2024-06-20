@@ -91,3 +91,8 @@ export async function getWorkflowRunData(id: string): Promise<WorkflowRunData> {
     const { data } = await client.api['workflow-run']({ id }).get()
     return data as WorkflowRunData
 }
+
+export async function importWorkflow(workflowData: string): Promise<Workflow> {
+    const { data } = await client.api.workflow.import.post({ workflowData })
+    return data as Workflow
+}

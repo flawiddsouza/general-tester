@@ -11,8 +11,10 @@
                     </select>
                     <button @click="environmentModalShow = true" class="button ml-1">Environments</button>
                 </div>
+                <button @click="triggerFileInput" class="button ml-1">Import workflow</button>
                 <button @click="exportWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Export workflow</button>
                 <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Run workflow</button>
+                <input type="file" @change="importWorkflow" style="display: none;" ref="fileInput">
             </div>
         </div>
     </nav>
@@ -27,6 +29,7 @@ import EnvironmentModal from '@/components/EnvironmentModal.vue'
 
 const store = useStore()
 const environmentModalShow = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 async function exportWorkflow(workflow: Workflow) {
     const blob = new Blob([JSON.stringify({
@@ -46,5 +49,24 @@ async function exportWorkflow(workflow: Workflow) {
 async function runWorkflow(workflow: Workflow) {
     store.workflowLogs = []
     await store.runWorkflow(workflow.id)
+}
+
+function triggerFileInput() {
+    fileInput.value?.click()
+}
+
+async function importWorkflow(event: Event) {
+    const input = event.target as HTMLInputElement
+    if (!input.files?.length) return
+
+    const file = input.files[0]
+    const reader = new FileReader()
+
+    reader.onload = async (e) => {
+        const content = e.target?.result as string
+        await store.importWorkflow(content)
+    }
+
+    reader.readAsText(file)
 }
 </script>
