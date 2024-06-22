@@ -52,3 +52,5 @@ export type SocketIoMap = { [workflowRunId: string]: { [branchId: string]: { [id
 export type WebSocketMap = { [workflowRunId: string]: { [branchId: string]: { [id: string]: WebSocket } } }
 
 export type NodeOutput = { [nodeId: string]: any }
+
+export type AbortControllersMap = { [workflowRunId: string]: { [parallelIndex: number]: { [nodeId: string]: AbortController } } }

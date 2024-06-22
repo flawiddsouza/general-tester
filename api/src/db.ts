@@ -19,6 +19,7 @@ import { desc, eq, inArray } from 'drizzle-orm'
 import { mkdir, exists } from 'node:fs/promises'
 import { WorkflowData } from './global'
 import { nanoid } from 'nanoid'
+import { constants } from '../../ui/src/constants'
 
 if (!await exists('./data')) {
     await mkdir('./data')
@@ -136,6 +137,14 @@ export async function createWorkflowRun(run: workflowRun) {
 export async function updateWorkflowRun(id: workflowRun['id'], update: Partial<workflowRun>) {
     return await db.update(workflowRuns).set(update)
        .where(eq(workflowRuns.id, id))
+}
+
+export async function getRunningWorkflowRuns() {
+    return await db.select().from(workflowRuns).where(eq(workflowRuns.status, constants.STATUS.RUNNING))
+}
+
+export async function markWorkflowRunAsCancelled(id: workflowRun['id']) {
+    return await updateWorkflowRun(id, { status: constants.STATUS.CANCELLED })
 }
 
 export async function deleteWorkflowRun(id: workflowRun['id']) {

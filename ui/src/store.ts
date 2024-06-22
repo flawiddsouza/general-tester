@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import * as api from '@/api'
 import { Ref } from 'vue'
 import { workflowRun } from '../../api/src/schema'
+import { constants } from './constants'
 
 interface State {
     webSocket: WebSocket | null
@@ -118,12 +119,25 @@ export const useStore = defineStore('store', {
             this.activeWorkflowRun = workflowRun
             this.sidebarSelectedTab = 'log'
         },
+        async stopWorkflowRun(workflowId: Workflow['id']) {
+            await api.stopWorkflowRun(workflowId)
+        },
         addWorkflowLog(data: string) {
             const parsedData: WorkflowLog = JSON.parse(data)
+
             if(this.activeWorkflowRun?.id !== parsedData.workflowRunId) {
                 return
             }
+
             this.workflowLogs.push(parsedData)
+
+            if(parsedData.message === 'Workflow run cancelled') {
+                this.activeWorkflowRun.status = constants.STATUS.CANCELLED
+            }
+
+            if(parsedData.message === 'Workflow run completed') {
+                this.activeWorkflowRun.status = constants.STATUS.COMPLETED
+            }
         },
         async fetchWorkflowRuns() {
             if (!this.activeWorkflow) {
@@ -140,6 +154,13 @@ export const useStore = defineStore('store', {
             const workflowRunData = await api.getWorkflowRunData(this.activeWorkflowRun.id)
 
             this.workflowLogs = workflowRunData.logs
+
+            if (this.activeWorkflowRun.status === constants.STATUS.RUNNING) {
+                const lastLogEntry = this.workflowLogs[this.workflowLogs.length - 1]
+                if (lastLogEntry && lastLogEntry.message === 'Workflow run completed') {
+                    this.activeWorkflowRun.status = constants.STATUS.COMPLETED
+                }
+            }
         },
         async deleteWorkflowRun(workflowRunId: workflowRun['id']) {
             await api.deleteWorkflowRun(workflowRunId)

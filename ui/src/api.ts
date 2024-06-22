@@ -82,6 +82,12 @@ export async function getWorkflowRuns(id: string): Promise<workflowRun[]> {
     return data as workflowRun[]
 }
 
+export async function stopWorkflowRun(id: string): Promise<void> {
+    const { data } = await client.api['workflow-run']({ id }).stop.post()
+
+    console.log(data)
+}
+
 export async function deleteWorkflowRun(id: string): Promise<void> {
     const { data } = await client.api['workflow-run']({ id }).delete()
     console.log(data)

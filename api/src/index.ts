@@ -20,8 +20,10 @@ import {
     deleteWorkflowRun,
     getWorkflowRunLogs,
     importWorkflow,
+    getRunningWorkflowRuns,
+    markWorkflowRunAsCancelled,
 } from './db'
-import { runWorkflow } from './workflow-helpers'
+import { runWorkflow, stopWorkflowRun } from './workflow-helpers'
 import { staticPlugin } from '@elysiajs/static'
 
 export const connectedClients: {
@@ -105,9 +107,21 @@ const api = new Elysia({ prefix: '/api' })
             logs,
         }
     })
+    .post('/workflow-run/:id/stop', async({ params }) => {
+        return stopWorkflowRun(params.id)
+    })
     .delete('/workflow-run/:id', async({ params }) => {
         return deleteWorkflowRun(params.id)
     })
+
+async function cancelRunningWorkflowsOnStartup() {
+    const runningWorkflowRuns = await getRunningWorkflowRuns()
+    for (const run of runningWorkflowRuns) {
+        await markWorkflowRunAsCancelled(run.id)
+    }
+}
+
+await cancelRunningWorkflowsOnStartup()
 
 const app = new Elysia()
     .use(cors())

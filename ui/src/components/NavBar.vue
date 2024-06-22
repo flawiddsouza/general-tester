@@ -13,7 +13,12 @@
                 </div>
                 <button @click="triggerFileInput" class="button ml-1">Import workflow</button>
                 <button @click="exportWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Export workflow</button>
-                <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Run workflow</button>
+                <template v-if="store.activeWorkflowRun?.status === 1">
+                    <button @click="stopWorkflowRun(store.activeWorkflowRun?.id)" :disabled="!store.activeWorkflow" class="button ml-1">Stop workflow Run</button>
+                </template>
+                <template v-else>
+                    <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Run workflow</button>
+                </template>
                 <input type="file" @change="importWorkflow" style="display: none;" ref="fileInput">
             </div>
         </div>
@@ -49,6 +54,10 @@ async function exportWorkflow(workflow: Workflow) {
 async function runWorkflow(workflow: Workflow) {
     store.workflowLogs = []
     await store.runWorkflow(workflow.id)
+}
+
+async function stopWorkflowRun(workflowRunId: string) {
+    await store.stopWorkflowRun(workflowRunId)
 }
 
 function triggerFileInput() {

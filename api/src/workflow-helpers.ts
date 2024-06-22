@@ -6,6 +6,7 @@ import {
     SocketIoMap,
     WebSocketMap,
     NodeOutput,
+    AbortControllersMap,
 } from './global'
 import { edge, node, workflowRun } from './schema'
 import type {
@@ -35,6 +36,10 @@ import { constants } from '../../ui/src/constants'
 
 const { STATUS } = constants
 
+const workflowRunStatus: { [key: string]: boolean } = {}
+
+const activePaths: { [workflowRunId: string]: number } = {}
+const abortControllers: AbortControllersMap = {}
 const socketIoConnections: SocketIoMap = {}
 const webSocketConnections: WebSocketMap = {}
 
@@ -102,10 +107,54 @@ export async function runWorkflow(workflowData: WorkflowData) {
 
     const workflowEnvironment = workflowData.environments.find(environment => environment.id === workflowData.workflow.currentEnvironmentId)
 
+    workflowRunStatus[workflowRunId] = true
+
+    // Initialize active paths counter
+    activePaths[workflowRunId] = 0
+
     // Start processing the workflow
     processNode(workflowRunId, parallelIndex, startNode, nodes, edges, outputs, null, [], workflowEnvironment ? workflowEnvironment.env : {})
 
     return newWorkflowRun
+}
+
+export async function stopWorkflowRun(workflowRunId: string) {
+    if (workflowRunId in workflowRunStatus) {
+        workflowRunStatus[workflowRunId] = false
+
+        await markWorkflowAsCancelled(workflowRunId)
+
+        // Abort all HTTP requests
+        if (abortControllers[workflowRunId]) {
+            for (const parallelIndex in abortControllers[workflowRunId]) {
+                for (const nodeId in abortControllers[workflowRunId][parallelIndex]) {
+                    abortControllers[workflowRunId][parallelIndex][nodeId].abort()
+                }
+                delete abortControllers[workflowRunId][parallelIndex]
+            }
+            delete abortControllers[workflowRunId]
+        }
+
+        // Disconnect all Socket.IO connections
+        if (socketIoConnections[workflowRunId]) {
+            for (const parallelIndex in socketIoConnections[workflowRunId]) {
+                for (const nodeId in socketIoConnections[workflowRunId][parallelIndex]) {
+                    socketIoConnections[workflowRunId][parallelIndex][nodeId].disconnect()
+                }
+            }
+            delete socketIoConnections[workflowRunId]
+        }
+
+        // Disconnect all WebSocket connections
+        if (webSocketConnections[workflowRunId]) {
+            for (const parallelIndex in webSocketConnections[workflowRunId]) {
+                for (const nodeId in webSocketConnections[workflowRunId][parallelIndex]) {
+                    webSocketConnections[workflowRunId][parallelIndex][nodeId].close()
+                }
+            }
+            delete webSocketConnections[workflowRunId]
+        }
+    }
 }
 
 async function markWorkflowAsFailed(workflowRunId: workflowRun['id'], parallelIndex: number) {
@@ -124,6 +173,26 @@ async function markWorkflowAsFailed(workflowRunId: workflowRun['id'], parallelIn
 async function markWorkflowAsCompleted(workflowRunId: workflowRun['id']) {
     await updateWorkflowRun(workflowRunId, {
         status: STATUS.COMPLETED
+    })
+
+    logWorkflowMessage({
+        workflowRunId,
+        parallelIndex: 0,
+        message: 'Workflow run completed',
+        debug: false,
+    })
+}
+
+async function markWorkflowAsCancelled(workflowRunId: string) {
+    await updateWorkflowRun(workflowRunId, {
+        status: constants.STATUS.CANCELLED
+    })
+
+    await logWorkflowMessage({
+        workflowRunId,
+        parallelIndex: 0,
+        message: 'Workflow run cancelled',
+        debug: false
     })
 }
 
@@ -179,6 +248,18 @@ function parseNodeData(workflowRunId: workflowRun['id'], parallelIndex: number, 
 }
 
 async function processNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: node, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, previousNode: node | null, variables: Param[], environment: any) {
+    if (!workflowRunStatus[workflowRunId]) {
+        logWorkflowMessage({
+            workflowRunId,
+            parallelIndex,
+            nodeId: node.id,
+            nodeType: node.type,
+            message: 'Workflow run has already been stopped, skipping node processing',
+            debug: true,
+        })
+        return
+    }
+
     let message = 'Processing node'
 
     if (node.type === 'Start') {
@@ -306,8 +387,6 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
                 delete webSocketConnections[workflowRunId][parallelIndex]
             }
 
-            await markWorkflowAsCompleted(workflowRunId)
-
             return
 
         default:
@@ -364,12 +443,23 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
 }
 
 async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflowRun['id'], parallelIndex: number, nodes: NodeMap, edges: EdgeMap, outputs: NodeOutput, node: node, variables: Param[], environment: any) {
-    return Promise.all(
-        nextEdges.map((edge) => {
-            const nextNode = structuredClone(nodes[edge.target])
-            return processNode(workflowRunId, parallelIndex, nextNode, nodes, edges, outputs, node, variables, environment)
-        })
-    )
+    // Increment the active paths counter for each new path
+    activePaths[workflowRunId] += nextEdges.length
+
+    const promises = nextEdges.map((edge) => {
+        const nextNode = structuredClone(nodes[edge.target])
+        return processNode(workflowRunId, parallelIndex, nextNode, nodes, edges, outputs, node, variables, environment)
+    })
+
+    // Wait for all paths to be processed
+    await Promise.all(promises)
+
+    // Decrement the active paths counter for each completed path
+    activePaths[workflowRunId] -= nextEdges.length
+
+    if (activePaths[workflowRunId] === 0) {
+        await markWorkflowAsCompleted(workflowRunId)
+    }
 }
 
 async function handleDelayNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: DelayNode) {
@@ -421,42 +511,77 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelI
         }
     })
 
-    const response = await fetch(parsedUrl, {
-        method: node.data.method,
-        headers: node.data.headers.filter(header => !header.disabled).reduce((acc: { [key: string]: string }, header) => {
-            acc[header.name] = header.value
-            return acc
-        }, {}),
-        body: node.data.method !== 'GET' ? JSON.stringify(node.data.body) : null
-    })
-
-    let responseData = await response.text()
+    const abortController = new AbortController()
+    abortControllers[workflowRunId] = abortControllers[workflowRunId] || {}
+    abortControllers[workflowRunId][parallelIndex] = abortControllers[workflowRunId][parallelIndex] || {}
+    abortControllers[workflowRunId][parallelIndex][node.id] = abortController
 
     try {
-        responseData = JSON.parse(responseData)
-    } catch (e) {
+        const response = await fetch(parsedUrl, {
+            signal: abortController.signal,
+            method: node.data.method,
+            headers: node.data.headers.filter(header => !header.disabled).reduce((acc: { [key: string]: string }, header) => {
+                acc[header.name] = header.value
+                return acc
+            }, {}),
+            body: node.data.method !== 'GET' ? JSON.stringify(node.data.body) : null
+        })
+
+        let responseData = await response.text()
+
+        try {
+            responseData = JSON.parse(responseData)
+        } catch (e) {
+            logWorkflowMessage({
+                workflowRunId,
+                parallelIndex,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Failed to parse response to JSON',
+                data: responseData,
+                debug: true
+            })
+        }
+
         logWorkflowMessage({
             workflowRunId,
             parallelIndex,
             nodeId: node.id,
             nodeType: node.type,
-            message: 'Failed to parse response to JSON',
+            message: 'Response',
             data: responseData,
-            debug: true
+            debug: false,
         })
+
+        delete abortControllers[workflowRunId][parallelIndex][node.id]
+
+        return responseData
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            logWorkflowMessage({
+                workflowRunId,
+                parallelIndex,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'AbortError: The operation was aborted.',
+                debug: true
+            })
+        } else {
+            logWorkflowMessage({
+                workflowRunId,
+                parallelIndex,
+                nodeId: node.id,
+                nodeType: node.type,
+                message: 'Error',
+                data: error.message,
+                debug: true
+            })
+        }
+        if(abortControllers[workflowRunId] && abortControllers[workflowRunId][parallelIndex]  && abortControllers[workflowRunId][parallelIndex][node.id]) {
+            delete abortControllers[workflowRunId][parallelIndex][node.id]
+        }
+        return null
     }
-
-    logWorkflowMessage({
-        workflowRunId,
-        parallelIndex,
-        nodeId: node.id,
-        nodeType: node.type,
-        message: 'Response',
-        data: responseData,
-        debug: false,
-    })
-
-    return responseData
 }
 
 function findSocketIONodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): string | null {
@@ -699,7 +824,6 @@ function handleSocketIOEmitterNode(workflowRunId: workflowRun['id'], parallelInd
 
     socket.emit(node.data.eventName, node.data.eventBody)
 }
-
 
 function findWebSocketNodeId(nodeId: string, nodes: NodeMap, edges: EdgeMap): string | null {
     let webSocketNodeId: string | null = null
