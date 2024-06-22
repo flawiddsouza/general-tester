@@ -457,7 +457,7 @@ async function executeTasksInParallel(nextEdges: edge[], workflowRunId: workflow
     // Decrement the active paths counter for each completed path
     activePaths[workflowRunId] -= nextEdges.length
 
-    if (activePaths[workflowRunId] === 0) {
+    if (activePaths[workflowRunId] === 0 && workflowRunStatus[workflowRunId]) {
         await markWorkflowAsCompleted(workflowRunId)
     }
 }
