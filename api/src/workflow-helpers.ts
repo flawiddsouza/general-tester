@@ -346,7 +346,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
 
         case 'IfCondition':
             const conditionResult = handleIfConditionNode(workflowRunId, parallelIndex, node as IfConditionNode)
-            outputs[node.id] = conditionResult
+            outputs[node.id] = { bool: conditionResult, previousInput: input }
 
             const ifEdges = edges[node.id] || []
             const nextEdge = ifEdges.find(e => conditionResult ? e.sourceHandle === 'true' : e.sourceHandle === 'false')
