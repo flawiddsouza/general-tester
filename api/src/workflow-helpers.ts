@@ -516,6 +516,22 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelI
     abortControllers[workflowRunId][parallelIndex] = abortControllers[workflowRunId][parallelIndex] || {}
     abortControllers[workflowRunId][parallelIndex][node.id] = abortController
 
+    let body: any = null
+
+    if (node.data.body.mimeType === 'application/json') {
+        body = JSON.stringify(node.data.body)
+    } else if (node.data.body.mimeType === 'application/x-www-form-urlencoded') {
+        const urlSearchParams = new URLSearchParams()
+
+        node.data.body.params.forEach(param => {
+            if (!param.disabled) {
+                urlSearchParams.append(param.name, param.value)
+            }
+        })
+
+        body = urlSearchParams
+    }
+
     try {
         const response = await fetch(parsedUrl, {
             signal: abortController.signal,
@@ -524,7 +540,7 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelI
                 acc[header.name] = header.value
                 return acc
             }, {}),
-            body: node.data.method !== 'GET' ? JSON.stringify(node.data.body) : null
+            body: node.data.method !== 'GET' ? body : null
         })
 
         let responseData = await response.text()
