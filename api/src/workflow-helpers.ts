@@ -204,7 +204,8 @@ function parseNodeData(workflowRunId: workflowRun['id'], parallelIndex: number, 
     const parsedData: any = {}
 
     const context = {
-        $input: input,
+        $previousInput: input ? input.input : undefined,
+        $input: input ? input.output : undefined,
         $vars: variables,
         $env: environment,
     }
@@ -309,19 +310,29 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
             break
 
         case 'HTTPRequest':
-            outputs[node.id] = await handleHTTPRequestNode(workflowRunId, parallelIndex, node as HTTPRequestNode)
+            {
+                const output = await handleHTTPRequestNode(workflowRunId, parallelIndex, node as HTTPRequestNode)
+                outputs[node.id] = output
+            }
             break
 
         case 'SocketIO':
-            outputs[node.id] = await handleSocketIONode(workflowRunId, parallelIndex, node as SocketIONode)
-            if(outputs[node.id] === false) {
-                await markWorkflowAsFailed(workflowRunId, parallelIndex)
-                return
+            {
+                const output = await handleSocketIONode(workflowRunId, parallelIndex, node as SocketIONode)
+                outputs[node.id] = { input, output }
+
+                if (output === false) {
+                    await markWorkflowAsFailed(workflowRunId, parallelIndex)
+                    return
+                }
             }
             break
 
         case 'SocketIOListener':
-            outputs[node.id] = await handleSocketIOListenerNode(workflowRunId, parallelIndex, node as SocketIOListenerNode, nodes, edges)
+            {
+                const output = await handleSocketIOListenerNode(workflowRunId, parallelIndex, node as SocketIOListenerNode, nodes, edges)
+                outputs[node.id] = { input, output }
+            }
             break
 
         case 'SocketIOEmitter':
@@ -329,15 +340,22 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
             break
 
         case 'WebSocket':
-            outputs[node.id] = await handleWebSocketNode(workflowRunId, parallelIndex, node as WebSocketNode)
-            if(outputs[node.id] === false) {
-                await markWorkflowAsFailed(workflowRunId, parallelIndex)
-                return
+            {
+                const output = await handleWebSocketNode(workflowRunId, parallelIndex, node as WebSocketNode)
+                outputs[node.id] = { input, output }
+
+                if (output === false) {
+                    await markWorkflowAsFailed(workflowRunId, parallelIndex)
+                    return
+                }
             }
             break
 
         case 'WebSocketListener':
-            outputs[node.id] = await handleWebSocketListenerNode(workflowRunId, parallelIndex, node as WebSocketListenerNode, nodes, edges)
+            {
+                const output = await handleWebSocketListenerNode(workflowRunId, parallelIndex, node as WebSocketListenerNode, nodes, edges)
+                outputs[node.id] = { input, output }
+            }
             break
 
         case 'WebSocketEmitter':
@@ -346,7 +364,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
 
         case 'IfCondition':
             const conditionResult = handleIfConditionNode(workflowRunId, parallelIndex, node as IfConditionNode)
-            outputs[node.id] = { bool: conditionResult, previousInput: input }
+            outputs[node.id] = { input, output: conditionResult }
 
             const ifEdges = edges[node.id] || []
             const nextEdge = ifEdges.find(e => conditionResult ? e.sourceHandle === 'true' : e.sourceHandle === 'false')
