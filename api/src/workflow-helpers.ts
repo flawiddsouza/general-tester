@@ -312,14 +312,14 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         case 'HTTPRequest':
             {
                 const output = await handleHTTPRequestNode(workflowRunId, parallelIndex, node as HTTPRequestNode)
-                outputs[node.id] = output
+                outputs[node.id] = { input: input?.output, output }
             }
             break
 
         case 'SocketIO':
             {
                 const output = await handleSocketIONode(workflowRunId, parallelIndex, node as SocketIONode)
-                outputs[node.id] = { input, output }
+                outputs[node.id] = { input: input?.output, output }
 
                 if (output === false) {
                     await markWorkflowAsFailed(workflowRunId, parallelIndex)
@@ -331,7 +331,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         case 'SocketIOListener':
             {
                 const output = await handleSocketIOListenerNode(workflowRunId, parallelIndex, node as SocketIOListenerNode, nodes, edges)
-                outputs[node.id] = { input, output }
+                outputs[node.id] = { input: input?.output, output }
             }
             break
 
@@ -342,7 +342,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         case 'WebSocket':
             {
                 const output = await handleWebSocketNode(workflowRunId, parallelIndex, node as WebSocketNode)
-                outputs[node.id] = { input, output }
+                outputs[node.id] = { input: input.output, output }
 
                 if (output === false) {
                     await markWorkflowAsFailed(workflowRunId, parallelIndex)
@@ -354,7 +354,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         case 'WebSocketListener':
             {
                 const output = await handleWebSocketListenerNode(workflowRunId, parallelIndex, node as WebSocketListenerNode, nodes, edges)
-                outputs[node.id] = { input, output }
+                outputs[node.id] = { input: input?.output, output }
             }
             break
 
@@ -364,7 +364,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
 
         case 'IfCondition':
             const conditionResult = handleIfConditionNode(workflowRunId, parallelIndex, node as IfConditionNode)
-            outputs[node.id] = { input, output: conditionResult }
+            outputs[node.id] = { input: input?.output, output: conditionResult }
 
             const ifEdges = edges[node.id] || []
             const nextEdge = ifEdges.find(e => conditionResult ? e.sourceHandle === 'true' : e.sourceHandle === 'false')
