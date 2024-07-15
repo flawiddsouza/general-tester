@@ -60,10 +60,19 @@ export async function getWorkflow(id: workflow['id']): Promise<WorkflowData> {
     }
 }
 
-export async function createWorkflow(workflow: workflow) {
+export async function createWorkflow(workflow: workflow, skipEnvironmentCreation = false) {
     const environmentId = nanoid()
-    workflow.currentEnvironmentId = environmentId
+
+    if (!skipEnvironmentCreation) {
+        workflow.currentEnvironmentId = environmentId
+    }
+
     await db.insert(workflows).values(workflow)
+
+    if (skipEnvironmentCreation) {
+        return
+    }
+
     await db.insert(environments).values({
         id: environmentId,
         name: 'Default',
@@ -164,19 +173,33 @@ export async function importWorkflow(workflowDataString: string) : Promise<workf
     const workflowData: WorkflowData = JSON.parse(workflowDataString)
 
     const newWorkflowId = nanoid()
+
+    const newEnvironments = []
+
+    const enviromentIdMap = new Map<string, string>()
+
+    for (const environment of workflowData.environments) {
+        const newEnvironmentId = nanoid()
+
+        enviromentIdMap.set(environment.id, newEnvironmentId)
+
+        const newEnvironment = {
+            ...environment,
+            id: newEnvironmentId,
+            workflowId: newWorkflowId
+        }
+
+        newEnvironments.push(newEnvironment)
+    }
+
     const newWorkflow = {
         ...workflowData.workflow,
         id: newWorkflowId,
-        currentEnvironmentId: null
+        currentEnvironmentId: workflowData.workflow.currentEnvironmentId ? enviromentIdMap.get(workflowData.workflow.currentEnvironmentId) : null
     }
-    await createWorkflow(newWorkflow)
+    await createWorkflow(newWorkflow, true)
 
-    for (const environment of workflowData.environments) {
-        const newEnvironment = {
-            ...environment,
-            id: nanoid(),
-            workflowId: newWorkflowId
-        }
+    for (const newEnvironment of newEnvironments) {
         await createEnvironment(newEnvironment)
     }
 
