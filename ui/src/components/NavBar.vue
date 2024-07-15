@@ -4,20 +4,22 @@
             General Tester <template v-if="store.activeWorkflow">> {{ store.activeWorkflow.name }}</template>
         </div>
         <div>
-            <div :style="{ visibility: store.activeWorkflow === null ? 'hidden' : 'visible' }">
-                <div style="display: inline-flex; align-items: center; height: 100%;">
+            <div>
+                <div style="display: inline-flex; align-items: center; height: 100%;" :style="{ visibility: store.activeWorkflow === null ? 'hidden' : 'visible' }">
                     <select :value="store.selectedEnvironment?.id" @change="store.changeEnvironment(($event.target as any).value)" style="border: 1px solid var(--border-color); outline: 0; background-color: var(--background-color); border-radius: var(--border-radius); padding: 0.1rem 0.2rem;" title="Change Environment">
                         <option v-for="environment in store.environments" :value="environment.id">{{ environment.name }}</option>
                     </select>
                     <button @click="environmentModalShow = true" class="button ml-1">Environments</button>
                 </div>
                 <button @click="triggerFileInput" class="button ml-1">Import workflow</button>
-                <button @click="exportWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Export workflow</button>
-                <template v-if="store.activeWorkflowRun?.status === 1">
-                    <button @click="stopWorkflowRun(store.activeWorkflowRun?.id)" :disabled="!store.activeWorkflow" class="button ml-1">Stop workflow Run</button>
-                </template>
-                <template v-else>
-                    <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Run workflow</button>
+                <template v-if="store.activeWorkflow">
+                    <button @click="exportWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Export workflow</button>
+                    <template v-if="store.activeWorkflowRun?.status === 1">
+                        <button @click="stopWorkflowRun(store.activeWorkflowRun?.id)" :disabled="!store.activeWorkflow" class="button ml-1">Stop workflow Run</button>
+                    </template>
+                    <template v-else>
+                        <button @click="runWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Run workflow</button>
+                    </template>
                 </template>
                 <input type="file" @change="importWorkflow" style="display: none;" ref="fileInput">
             </div>
