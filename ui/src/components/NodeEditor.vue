@@ -90,14 +90,21 @@ import IfCondition from './Nodes/IfCondition.vue'
 import Delay from './Nodes/Delay.vue'
 import { useStore } from '@/store'
 import { nanoid } from 'nanoid'
+import { useToast } from 'vue-toast-notification'
 
 defineProps<{ nodes: Node[]; edges: Edge[] }>()
 
 const store = useStore()
 const { onConnect, addEdges, onNodeDragStop } = useVueFlow()
 const { onDragOver, onDrop, onDragLeave, isDragOver } = useDragAndDrop(store)
+const $toast = useToast()
 
 onConnect((edge) => {
+    if (edge.source === edge.target) {
+        $toast.error('Cannot connect a node to itself')
+        return
+    }
+
     const edgeConverted: Edge = edge as Edge
     edgeConverted.id = nanoid()
     edgeConverted.workflowId = store.activeWorkflow?.id as string
