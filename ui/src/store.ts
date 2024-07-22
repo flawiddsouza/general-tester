@@ -206,6 +206,7 @@ export const useStore = defineStore('store', {
         },
         async updateEnvironment(environmentId: Environment['id'], env: Environment['env']) {
             await api.updateEnvironment(environmentId, { env })
+            this.environments.find(environment => environment.id === environmentId)!.env = env
         },
         async deleteEnvironment(environmentId: Environment['id']) {
             if (!this.activeWorkflow) {
