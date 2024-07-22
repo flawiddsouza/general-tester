@@ -48,6 +48,10 @@ export const constants = {
             name: 'Delay',
             label: 'Delay'
         },
+        {
+            name: 'SetVariable',
+            label: 'Set Variable'
+        },
     ],
     STATUS: {
         RUNNING: 1,

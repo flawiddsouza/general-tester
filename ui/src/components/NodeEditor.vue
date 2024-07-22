@@ -55,6 +55,10 @@
         <template #node-Delay="node">
             <Delay :node="(node as unknown as DelayNode)" />
         </template>
+
+        <template #node-SetVariable="node">
+            <SetVariable :node="(node as unknown as SetVariableNode)" />
+        </template>
     </VueFlow>
 </template>
 
@@ -76,6 +80,7 @@ import {
     WebSocketEmitterNode,
     IfConditionNode,
     DelayNode,
+    SetVariableNode,
 } from '@/global'
 import Start from './Nodes/Start.vue'
 import End from './Nodes/End.vue'
@@ -88,6 +93,7 @@ import WebSocketListener from './Nodes/WebSocketListener.vue'
 import WebSocketEmitter from './Nodes/WebSocketEmitter.vue'
 import IfCondition from './Nodes/IfCondition.vue'
 import Delay from './Nodes/Delay.vue'
+import SetVariable from './Nodes/SetVariable.vue'
 import { useStore } from '@/store'
 import { nanoid } from 'nanoid'
 import { useToast } from 'vue-toast-notification'

@@ -22,6 +22,7 @@ import type {
     StartNode,
     Param,
     DelayNode,
+    SetVariableNode,
 } from '../../ui/src/global'
 import { connectedClients } from './index'
 // @ts-ignore
@@ -386,6 +387,11 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
 
         case 'Delay':
             await handleDelayNode(workflowRunId, parallelIndex, node as DelayNode)
+            break
+
+        case 'SetVariable':
+            handleSetVariableNode(workflowRunId, parallelIndex, node as SetVariableNode, variables)
+            outputs[node.id] = structuredClone(input)
             break
 
         case 'End':
@@ -1108,4 +1114,22 @@ function handleIfConditionNode(workflowRunId: workflowRun['id'], parallelIndex: 
     })
 
     return conditionMet
+}
+
+function handleSetVariableNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: SetVariableNode, variables: Param[]) {
+    variables.push({
+        name: node.data.key,
+        value: node.data.value,
+        disabled: false
+    })
+
+    logWorkflowMessage({
+        workflowRunId,
+        parallelIndex,
+        nodeId: node.id,
+        nodeType: node.type,
+        message: node.data.key,
+        data: node.data.value,
+        debug: false,
+    })
 }

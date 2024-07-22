@@ -135,6 +135,16 @@ export interface DelayNode extends BaseNode {
     data: DelayNodeData
 }
 
+export interface SetVariableNodeData {
+    key: string
+    value: string
+}
+
+export interface SetVariableNode extends BaseNode {
+    type: 'SetVariable'
+    data: SetVariableNodeData
+}
+
 export type Node =
     | StartNode
     | EndNode
@@ -147,6 +157,7 @@ export type Node =
     | WebSocketEmitterNode
     | IfConditionNode
     | DelayNode
+    | SetVariableNode
 
 export interface Edge {
     id: string

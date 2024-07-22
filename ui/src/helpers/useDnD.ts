@@ -12,6 +12,7 @@ import {
     WebSocketListenerNodeData,
     WebSocketEmitterNodeData,
     DelayNodeData,
+    SetVariableNodeData,
 } from '@/global'
 import { StoreType } from '@/store'
 
@@ -113,6 +114,15 @@ function createEmptyNodeData(type: Node['type']) {
     if (type === 'Delay') {
         const data: DelayNodeData = {
             delayInMS: 0,
+        }
+
+        return data
+    }
+
+    if (type === 'SetVariable') {
+        const data: SetVariableNodeData = {
+            key: '',
+            value: '',
         }
 
         return data
