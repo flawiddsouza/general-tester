@@ -313,6 +313,10 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         case 'HTTPRequest':
             {
                 const output = await handleHTTPRequestNode(workflowRunId, parallelIndex, node as HTTPRequestNode)
+                if (output instanceof Error) {
+                    await markWorkflowAsFailed(workflowRunId, parallelIndex)
+                    return
+                }
                 outputs[node.id] = { input: input?.output, output }
             }
             break
@@ -614,13 +618,13 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelI
                 nodeType: node.type,
                 message: 'Error',
                 data: error.message,
-                debug: true
+                debug: false,
             })
         }
         if(abortControllers[workflowRunId] && abortControllers[workflowRunId][parallelIndex]  && abortControllers[workflowRunId][parallelIndex][node.id]) {
             delete abortControllers[workflowRunId][parallelIndex][node.id]
         }
-        return null
+        return new Error(error.message)
     }
 }
 
