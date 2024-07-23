@@ -136,8 +136,7 @@ export interface DelayNode extends BaseNode {
 }
 
 export interface SetVariableNodeData {
-    key: string
-    value: string
+    variables: Param[]
 }
 
 export interface SetVariableNode extends BaseNode {

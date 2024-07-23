@@ -12,6 +12,7 @@
     --secondary-background-color: #ecedf9;
     --focus-border-color: #007bff;
     --box-shadow-color-primary: #0000004d;
+    --secondary-text-color: #777;
     --font-monospace: Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Courier New', monospace, 'Droid Sans Fallback';
 }
 
@@ -206,6 +207,10 @@ table.no-padding {
     margin-top: 0.5rem;
 }
 
+.mt-2 {
+    margin-top: 1rem;
+}
+
 .mb-1 {
     margin-bottom: 0.5rem;
 }
@@ -236,6 +241,10 @@ table.no-padding {
 
 .bold {
     font-weight: bold;
+}
+
+.v-h {
+    visibility: hidden;
 }
 
 /* vue flow styles */

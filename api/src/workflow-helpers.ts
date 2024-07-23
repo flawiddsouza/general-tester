@@ -1121,19 +1121,20 @@ function handleIfConditionNode(workflowRunId: workflowRun['id'], parallelIndex: 
 }
 
 function handleSetVariableNode(workflowRunId: workflowRun['id'], parallelIndex: number, node: SetVariableNode, variables: Param[]) {
-    variables.push({
-        name: node.data.key,
-        value: node.data.value,
-        disabled: false
-    })
+    variables.push(...node.data.variables)
+
+    const flattenedVariables = node.data.variables.reduce((acc: any, variable) => {
+        acc[variable.name] = variable.value
+        return acc
+    }, {})
 
     logWorkflowMessage({
         workflowRunId,
         parallelIndex,
         nodeId: node.id,
         nodeType: node.type,
-        message: node.data.key,
-        data: node.data.value,
+        message: '',
+        data: flattenedVariables,
         debug: false,
     })
 }

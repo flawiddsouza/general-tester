@@ -121,8 +121,13 @@ function createEmptyNodeData(type: Node['type']) {
 
     if (type === 'SetVariable') {
         const data: SetVariableNodeData = {
-            key: '',
-            value: '',
+            variables: [
+                {
+                    name: '',
+                    value: '',
+                    disabled: false,
+                }
+            ]
         }
 
         return data
