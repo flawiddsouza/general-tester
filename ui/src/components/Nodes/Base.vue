@@ -45,7 +45,7 @@ watch(props.node.data, () => {
     store.updateNode(props.node.id, {
         data: props.node.data,
     })
-})
+}, { deep: true })
 </script>
 
 <style scoped>
