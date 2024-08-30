@@ -68,6 +68,7 @@ function triggerFileInput() {
 
 async function importWorkflow(event: Event) {
     const input = event.target as HTMLInputElement
+
     if (!input.files?.length) return
 
     const file = input.files[0]
@@ -76,6 +77,7 @@ async function importWorkflow(event: Event) {
     reader.onload = async (e) => {
         const content = e.target?.result as string
         await store.importWorkflow(content)
+        input.value = ''
     }
 
     reader.readAsText(file)
