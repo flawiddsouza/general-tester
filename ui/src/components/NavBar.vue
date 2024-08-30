@@ -14,6 +14,7 @@
                 <button @click="triggerFileInput" class="button ml-1">Import workflow</button>
                 <template v-if="store.activeWorkflow">
                     <button @click="exportWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Export workflow</button>
+                    <button @click="duplicateWorkflow(store.activeWorkflow as Workflow)" :disabled="!store.activeWorkflow" class="button ml-1">Duplicate workflow</button>
                     <template v-if="store.activeWorkflowRun?.status === 1">
                         <button @click="stopWorkflowRun(store.activeWorkflowRun?.id)" :disabled="!store.activeWorkflow" class="button ml-1">Stop workflow Run</button>
                     </template>
@@ -53,6 +54,27 @@ async function exportWorkflow(workflow: Workflow) {
     URL.revokeObjectURL(url)
 }
 
+async function duplicateWorkflow(workflow: Workflow) {
+    const workflowData = {
+        workflow,
+        environments: store.environments,
+        nodes: store.nodes,
+        edges: store.edges,
+    }
+
+    const content = JSON.parse(JSON.stringify(workflowData))
+
+    const newWorkflowName = prompt('Enter new workflow name:', `${workflow.name} (copy)`)
+
+    if (!newWorkflowName) {
+        return
+    }
+
+    content.workflow.name = newWorkflowName
+
+    await store.importWorkflow(JSON.stringify(content))
+}
+
 async function runWorkflow(workflow: Workflow) {
     store.workflowLogs = []
     await store.runWorkflow(workflow.id)
@@ -75,9 +97,19 @@ async function importWorkflow(event: Event) {
     const reader = new FileReader()
 
     reader.onload = async (e) => {
-        const content = e.target?.result as string
-        await store.importWorkflow(content)
+        const content = JSON.parse(e.target?.result as string)
+
         input.value = ''
+
+        const newWorkflowName = prompt('Enter new workflow name:', content.workflow.name)
+
+        if (!newWorkflowName) {
+            return
+        }
+
+        content.workflow.name = newWorkflowName
+
+        await store.importWorkflow(JSON.stringify(content))
     }
 
     reader.readAsText(file)
