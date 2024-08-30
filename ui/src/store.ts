@@ -18,6 +18,7 @@ interface State {
     activeWorkflowRun: workflowRun | null
     workflowLogs: WorkflowLog[]
     vueFlowRef: Ref<any> | null
+    vueFlowRefresher: number
     sidebarSelectedTab: 'workflows' | 'nodes' | 'runs' | 'log'
 }
 
@@ -35,6 +36,7 @@ export const useStore = defineStore('store', {
             activeWorkflowRun: null,
             workflowLogs: [],
             vueFlowRef: null,
+            vueFlowRefresher: 0,
             sidebarSelectedTab: 'workflows',
         }
     },
@@ -108,6 +110,8 @@ export const useStore = defineStore('store', {
             this.selectedEnvironment = this.environments.find(environment => environment.id === this.activeWorkflow?.currentEnvironmentId) ?? null
             this.nodes = workflowData.nodes
             this.edges = workflowData.edges
+
+            this.vueFlowRefresher = this.vueFlowRefresher + 1
 
             this.workflowLogs = []
             this.activeWorkflowRun = null

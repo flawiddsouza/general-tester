@@ -221,6 +221,9 @@ export default function useDragAndDrop(store?: StoreType) {
             updateNode(nodeId, (node) => {
                 newNode.position = { x: node.position.x - node.dimensions.width / 2, y: node.position.y - node.dimensions.height / 2 }
                 store.addNode(newNode)
+                // this is required else store.nodes will go out of sync and
+                // will cause issue when duplicating a node that has been dropped
+                store.nodes.push(newNode)
                 return {
                     position: newNode.position,
                 }

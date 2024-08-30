@@ -9,6 +9,7 @@
         @dragleave="onDragLeave"
         @drop="(onDrop as any)"
         :ref="ref => store.vueFlowRef = ref"
+        :key="'vueFlowRefresher-' + store.vueFlowRefresher"
     >
         <Background :gap="15" :style="{ backgroundColor: isDragOver ? '#e7f3ff' : 'transparent' }" />
 
@@ -127,6 +128,15 @@ onNodeDragStop((event) => {
             y: node.position.y,
         },
     })
+
+    const nodeToUpdate = store.nodes.find((n) => n.id === node.id)
+
+    if (!nodeToUpdate) {
+        return
+    }
+
+    nodeToUpdate.position.x = node.position.x
+    nodeToUpdate.position.y = node.position.y
 })
 
 function handleNodesChange(nodes: NodeChange[]) {
