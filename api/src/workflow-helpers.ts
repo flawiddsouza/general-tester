@@ -80,6 +80,10 @@ export async function runWorkflow(workflowData: WorkflowData) {
     const edges: EdgeMap = {}
     const outputs: NodeOutput = {}
 
+    workflowData.nodes.map((node) => {
+        node.originalData = node.data
+    })
+
     // Create a map of nodes and edges for easy lookup
     workflowData.nodes.forEach((node) => {
         nodes[node.id] = node
@@ -277,7 +281,8 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         acc[variable.name] = variable.value
         return acc
     }, {} as any)
-    const parsedNodeData = parseNodeData(workflowRunId, parallelIndex, node.id, node.type, input, node.data, variablesConverted, environment)
+
+    const parsedNodeData = parseNodeData(workflowRunId, parallelIndex, node.id, node.type, input, node.originalData, variablesConverted, environment)
 
     let logData: any
 

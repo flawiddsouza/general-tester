@@ -37,7 +37,7 @@ export const nodes = sqliteTable('nodes', {
 })
 
 export const node = createInsertSchema(nodes)
-export type node = Static<typeof node>
+export type node = Static<typeof node> & { originalData?: any }
 
 export const edges = sqliteTable('edges', {
     id: text('id').primaryKey(),
