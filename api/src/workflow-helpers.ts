@@ -347,7 +347,7 @@ async function processNode(workflowRunId: workflowRun['id'], parallelIndex: numb
         case 'WebSocket':
             {
                 const output = await handleWebSocketNode(workflowRunId, parallelIndex, node as WebSocketNode)
-                outputs[node.id] = { input: input.output, output }
+                outputs[node.id] = { input: input?.output, output }
 
                 if (output === false) {
                     await markWorkflowAsFailed(workflowRunId, parallelIndex)
