@@ -1096,6 +1096,18 @@ function handleIfConditionNode(workflowRunId: workflowRun['id'], parallelIndex: 
         case '!=':
             conditionMet = node.data.leftOperand !== node.data.rightOperand
             break
+        case '>':
+            conditionMet = node.data.leftOperand > node.data.rightOperand
+            break
+        case '>=':
+            conditionMet = node.data.leftOperand >= node.data.rightOperand
+            break
+        case '<':
+            conditionMet = node.data.leftOperand < node.data.rightOperand
+            break
+        case '<=':
+            conditionMet = node.data.leftOperand <= node.data.rightOperand
+            break
         default:
             logWorkflowMessage({
                 workflowRunId,
