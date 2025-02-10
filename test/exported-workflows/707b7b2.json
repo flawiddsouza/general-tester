@@ -1,0 +1,189 @@
+{
+    "workflow": {
+        "id": "v9v2ES2N5fF84i0zW_rbA",
+        "name": "Test",
+        "currentEnvironmentId": "cvincUTDfDmq-e3skIa50",
+        "createdAt": "2025-02-10 06:41:41",
+        "updatedAt": "2025-02-10 06:41:41"
+    },
+    "environments": [
+        {
+            "id": "cvincUTDfDmq-e3skIa50",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "name": "Default",
+            "env": {},
+            "createdAt": "2025-02-10 06:41:41",
+            "updatedAt": "2025-02-10 06:41:41"
+        }
+    ],
+    "nodes": [
+        {
+            "id": "vH46TRwYihaQ1peO3G01S",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "type": "Start",
+            "data": {
+                "parallelEntries": [
+                    {
+                        "variables": [
+                            {
+                                "name": "cata",
+                                "value": "1",
+                                "disabled": false
+                            }
+                        ]
+                    },
+                    {
+                        "variables": [
+                            {
+                                "name": "cata",
+                                "value": "2",
+                                "disabled": false
+                            }
+                        ]
+                    }
+                ]
+            },
+            "position": {
+                "x": -6,
+                "y": 343
+            },
+            "createdAt": "2025-02-10 06:42:04",
+            "updatedAt": "2025-02-10 08:00:09"
+        },
+        {
+            "id": "FYBrdzKWhyiOk0fF7V-mo",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "type": "WebSocket",
+            "data": {
+                "url": "ws://localhost:8555"
+            },
+            "position": {
+                "x": 549.5,
+                "y": 230.5
+            },
+            "createdAt": "2025-02-10 06:51:49",
+            "updatedAt": "2025-02-10 06:52:58"
+        },
+        {
+            "id": "qj0tp25Ei7SobV8b4tkbv",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "type": "WebSocketListener",
+            "data": {
+                "eventName": "message"
+            },
+            "position": {
+                "x": 895.5,
+                "y": 61
+            },
+            "createdAt": "2025-02-10 06:51:54",
+            "updatedAt": "2025-02-10 07:55:32"
+        },
+        {
+            "id": "xKrVKdPnwIB58NYAu6CVX",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "type": "IfCondition",
+            "data": {
+                "leftOperand": "cat",
+                "operator": ">",
+                "rightOperand": "0"
+            },
+            "position": {
+                "x": 1199.5,
+                "y": 159
+            },
+            "createdAt": "2025-02-10 06:52:05",
+            "updatedAt": "2025-02-10 06:52:19"
+        },
+        {
+            "id": "atjXaDOlzHITFKa_KD0vV",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "type": "SetVariable",
+            "data": {
+                "variables": [
+                    {
+                        "name": "cat",
+                        "value": "{{ $previousInput.cat }}",
+                        "disabled": false
+                    }
+                ]
+            },
+            "position": {
+                "x": 1558.041056591248,
+                "y": 172.99951113327793
+            },
+            "createdAt": "2025-02-10 06:52:31",
+            "updatedAt": "2025-02-10 06:52:44"
+        },
+        {
+            "id": "j7DZGUfbLfpnJrp9gSStb",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "type": "WebSocketEmitter",
+            "data": {
+                "eventBody": "{ \"cat\": {{ $vars.cata }} }"
+            },
+            "position": {
+                "x": 913,
+                "y": 367
+            },
+            "createdAt": "2025-02-10 07:55:42",
+            "updatedAt": "2025-02-10 08:00:11"
+        }
+    ],
+    "edges": [
+        {
+            "id": "wEfxSIQXvOjXW9jwzqTt-",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "source": "vH46TRwYihaQ1peO3G01S",
+            "sourceHandle": "output",
+            "target": "FYBrdzKWhyiOk0fF7V-mo",
+            "targetHandle": "input",
+            "animated": true,
+            "createdAt": "2025-02-10 06:51:50",
+            "updatedAt": "2025-02-10 06:51:50"
+        },
+        {
+            "id": "5M1hqehSDotZN1iDJzVi_",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "source": "FYBrdzKWhyiOk0fF7V-mo",
+            "sourceHandle": "output",
+            "target": "qj0tp25Ei7SobV8b4tkbv",
+            "targetHandle": "input",
+            "animated": true,
+            "createdAt": "2025-02-10 06:51:58",
+            "updatedAt": "2025-02-10 06:51:58"
+        },
+        {
+            "id": "UhrupqxL2qRpU_0oy_X6q",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "source": "qj0tp25Ei7SobV8b4tkbv",
+            "sourceHandle": "output",
+            "target": "xKrVKdPnwIB58NYAu6CVX",
+            "targetHandle": "input",
+            "animated": true,
+            "createdAt": "2025-02-10 06:52:26",
+            "updatedAt": "2025-02-10 06:52:26"
+        },
+        {
+            "id": "A6Ob2Pi96Cw9e6LKBWGyX",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "source": "xKrVKdPnwIB58NYAu6CVX",
+            "sourceHandle": "true",
+            "target": "atjXaDOlzHITFKa_KD0vV",
+            "targetHandle": "input",
+            "animated": true,
+            "createdAt": "2025-02-10 06:52:34",
+            "updatedAt": "2025-02-10 06:52:34"
+        },
+        {
+            "id": "ZyefLLVXISS3NATRe3Sfq",
+            "workflowId": "v9v2ES2N5fF84i0zW_rbA",
+            "source": "FYBrdzKWhyiOk0fF7V-mo",
+            "sourceHandle": "output",
+            "target": "j7DZGUfbLfpnJrp9gSStb",
+            "targetHandle": "input",
+            "animated": true,
+            "createdAt": "2025-02-10 07:55:44",
+            "updatedAt": "2025-02-10 07:55:44"
+        }
+    ]
+}
