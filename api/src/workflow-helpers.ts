@@ -552,7 +552,7 @@ async function handleHTTPRequestNode(workflowRunId: workflowRun['id'], parallelI
     let body: any = null
 
     if (node.data.body.mimeType === 'application/json') {
-        body = JSON.stringify(node.data.body)
+        body = node.data.body.text
     } else if (node.data.body.mimeType === 'application/x-www-form-urlencoded') {
         const urlSearchParams = new URLSearchParams()
 
