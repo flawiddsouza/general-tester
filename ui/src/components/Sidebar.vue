@@ -38,27 +38,31 @@
                 <div class="p-2" v-if="store.workflowRuns.length === 0">No runs found</div>
             </div>
         </div>
-        <div v-if="store.sidebarSelectedTab === 'log'" class="p-2 grid" style="grid-template-rows: auto 1fr;">
-            <div class="mb-1">
+        <div v-if="store.sidebarSelectedTab === 'log'" class="grid" style="grid-template-rows: auto 1fr; min-height: 0;">
+            <div class="p-2 pb-1">
                 <label class="cursor-pointer">
                     <input type="checkbox" v-model="showDebugLogs" />
                     Show debug logs
                 </label>
             </div>
-            <div style="user-select: text;">
-                <div v-for="(log, logIndex) in filteredWorkflowLogs" :class="{ 'mt-1': logIndex > 0 }" :style="{ 'backgroundColor': log.debug ? '#c8cfff' : '', padding: log.debug ? '0.5rem' : '' }">
-                    <div style="font-size: 0.7rem; color: #797979;">{{ formatTimestamp(log.timestamp!) }}</div>
-                    <div v-if="log.nodeType" class="bold cursor-pointer" @click="moveToNode(log.nodeId!)">
+            <div ref="logContainer" style="user-select: text; overflow-y: auto;" @scroll="onLogScroll">
+                <div
+                    v-for="(log, logIndex) in filteredWorkflowLogs"
+                    :key="logIndex"
+                    class="log-entry"
+                    :class="{ 'log-debug': log.debug, 'log-error': isErrorLog(log) }"
+                    :style="log.parallelIndex > 0 ? { borderLeft: `3px solid ${getParallelColor(log.parallelIndex)}`, backgroundColor: `${getParallelColor(log.parallelIndex)}11` } : {}"
+                >
+                    <div class="log-timestamp">{{ formatTimestamp(log.timestamp!) }}</div>
+                    <div v-if="log.nodeType" class="bold cursor-pointer log-node" @click="moveToNode(log.nodeId!)">
                         {{ log.nodeType }}
-                        <template v-if="log.parallelIndex > 0">
-                            - {{ log.parallelIndex }}
-                        </template>
+                        <span v-if="log.parallelIndex > 0" class="log-parallel" :style="{ background: getParallelColor(log.parallelIndex) + '22', color: getParallelColor(log.parallelIndex) }">Parallel {{ log.parallelIndex }}</span>
                     </div>
-                    <div>{{ log.message }}</div>
-                    <template v-if="log.data">
-                        <textarea readonly class="full-width" style="min-height: 7rem; resize: vertical; outline: none;">{{ log.data }}</textarea>
-                    </template>
+                    <div v-if="resolvedNodeContextMap[`${log.nodeId}-${log.parallelIndex}`]" class="log-node-context">{{ resolvedNodeContextMap[`${log.nodeId}-${log.parallelIndex}`] }}</div>
+                    <div v-if="log.message" class="log-message">{{ log.message }}</div>
+                    <textarea v-if="log.data" readonly class="full-width" style="min-height: 7rem; resize: vertical; outline: none;">{{ log.data }}</textarea>
                 </div>
+                <div v-if="filteredWorkflowLogs.length === 0" style="color: #797979; padding: 0.5rem;">No logs yet</div>
             </div>
         </div>
     </aside>
@@ -66,7 +70,7 @@
 
 <script setup lang="ts">
 import useDragAndDrop from '@/helpers/useDnD'
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { constants } from '@/constants'
 import { useStore } from '@/store'
 import { Workflow } from '@/global';
@@ -80,6 +84,8 @@ const store = useStore()
 
 const nodesTypes = ref(constants.NODE_TYPES)
 const showDebugLogs = ref(false)
+const logContainer = ref<HTMLElement | null>(null)
+const userScrolledUp = ref(false)
 
 const filteredWorkflowLogs = computed(() => {
     return store.workflowLogs.filter(log => {
@@ -90,6 +96,66 @@ const filteredWorkflowLogs = computed(() => {
         return !log.debug
     })
 })
+
+function onLogScroll() {
+    if (!logContainer.value) return
+    const { scrollTop, scrollHeight, clientHeight } = logContainer.value
+    userScrolledUp.value = scrollTop + clientHeight < scrollHeight - 10
+}
+
+watch(filteredWorkflowLogs, async () => {
+    await nextTick()
+    if (logContainer.value && !userScrolledUp.value) {
+        logContainer.value.scrollTop = logContainer.value.scrollHeight
+    }
+})
+
+const resolvedNodeContextMap = computed(() => {
+    const map: Record<string, string> = {}
+    for (const log of store.workflowLogs) {
+        if (!log.nodeId || !log.nodeType) continue
+        const key = `${log.nodeId}-${log.parallelIndex}`
+        if (map[key]) continue
+        const ctx = getNodeContext(log.nodeId, log.nodeType, log.data)
+        if (ctx) map[key] = ctx
+    }
+    return map
+})
+
+function getNodeContext(nodeId: string | null | undefined, nodeType: string | null | undefined, logData?: any): string {
+    if (!nodeId) return ''
+    const d = logData?.parsedNodeData ?? logData
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return ''
+    const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+    switch (nodeType) {
+        case 'HTTPRequest':
+            return (HTTP_METHODS.includes(d.method) && d.url) ? `${d.method} ${d.url}` : ''
+        case 'SocketIO':
+        case 'WebSocket':
+            return d.url && !d.method ? `${d.url}` : ''
+        case 'SocketIOListener':
+        case 'SocketIOEmitter':
+        case 'WebSocketListener':
+        case 'WebSocketEmitter':
+            return d.eventName ? `${d.eventName}` : ''
+        case 'Delay':
+            return d.delayInMS != null ? `${d.delayInMS}ms` : ''
+        case 'IfCondition':
+            return (d.leftOperand != null && d.operator) ? `${d.leftOperand} ${d.operator} ${d.rightOperand}` : ''
+        default: return ''
+    }
+}
+
+function getParallelColor(index: number) {
+    const hue = ((index - 1) * 137.5) % 360
+    return `hsl(${hue}, 65%, 45%)`
+}
+
+function isErrorLog(log: { message: string }) {
+    const msg = log.message.toLowerCase()
+    return msg.includes('error') || msg.includes('failed') || msg.includes('invalid')
+}
+
 
 async function addNewWorkflow() {
     const prompt = window.prompt('Enter the name of the new workflow')
@@ -144,3 +210,48 @@ async function deleteWorkflowRun(workflowRunId: workflowRun['id']) {
     await store.deleteWorkflowRun(workflowRunId)
 }
 </script>
+
+<style scoped>
+.log-entry {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.log-debug {
+    background-color: #eef0ff;
+}
+
+.log-error {
+    background-color: #fff0f0;
+    border-left: 3px solid #d9534f;
+}
+
+.log-timestamp {
+    font-size: 0.7rem;
+    color: #797979;
+}
+
+.log-node {
+    font-weight: bold;
+}
+
+.log-parallel {
+    font-weight: normal;
+    font-size: 0.75rem;
+    margin-left: 0.3rem;
+    border-radius: 3px;
+    padding: 0 4px;
+}
+
+.log-message {
+    margin-top: 0.1rem;
+    word-break: break-word;
+}
+
+.log-node-context {
+    font-weight: normal;
+    font-size: 0.8rem;
+    color: #444;
+    word-break: break-all;
+}
+</style>
